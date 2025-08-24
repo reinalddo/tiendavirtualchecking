@@ -1,0 +1,874 @@
+/* css/style.css */
+
+body {
+    font-family: sans-serif;
+    margin: 0;
+    background-color: #f4f4f4;
+}
+
+header {
+    background-color: #333;
+    color: white;
+    padding: 0 2rem;
+    display: flex; /* 1. Convertimos el header en contenedor flex */
+    justify-content: flex-end; /* 2. Alineamos sus hijos (el nav) a la derecha */
+    align-items: center;
+    position: relative; /* Clave para que z-index funcione */
+    z-index: 1000;      /* Un número alto para ponerlo siempre al frente */
+}
+
+header nav {
+    display: flex;
+    gap: 1.5rem; /* Espacio entre los enlaces */
+}
+
+header nav a {
+    color: white;
+    text-decoration: none;
+    padding: 1rem 0;
+    display: inline-block;
+}
+
+main {
+    padding: 20px;
+}
+
+.page-container {
+    display: flex;
+    gap: 20px;
+}
+
+.sidebar {
+    width: 200px;
+    flex-shrink: 0; /* Evita que la barra lateral se encoja */
+}
+
+.sidebar h3 {
+    margin-top: 0;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul a {
+    text-decoration: none;
+    color: #333;
+    display: block;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.sidebar ul a:hover {
+    background-color: #ddd;
+}
+
+.main-content {
+    flex-grow: 1; /* Permite que el contenido principal ocupe el espacio restante */
+}
+/*************************************  GALERIA PRINCIPAL  *******************************/
+.hero-gallery {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.slider {
+    position: relative;
+    width: 100%;
+    height: 500px;
+    overflow: hidden;
+    background-color: #f0f0f0;
+}
+
+.slide {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* NUEVA CAPA VIRTUAL PARA EL FONDO BORROSO */
+.slide::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: inherit; /* Hereda la imagen de fondo del .slide */
+    background-size: cover;
+    background-position: center;
+    filter: blur(15px); /* El efecto de desenfoque */
+    transform: scale(1.1); /* Escala un poco para que el borde borroso no se vea */
+    z-index: 1; /* Se pone detrás de la imagen principal */
+}
+
+.slide.active {
+    opacity: 1;
+}
+
+/* Enlace que envuelve la imagen */
+.slide a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    position: relative; /* Asegura que el contenido esté sobre el fondo */
+    z-index: 2;
+}
+
+/* La imagen principal, nítida */
+.slide img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    box-shadow: 0px 10px 30px rgba(0,0,0,0.2);
+}
+
+/* La leyenda de texto */
+.slide-caption {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    max-width: 80%;
+}
+
+.slide-caption h3 {
+    font-size: 1.8rem; /* Tamaño del título */
+    font-weight: 700;
+    margin: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    /* --- NUEVOS ESTILOS DE FUENTE --- */
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    padding: 15px 20px;
+    border-radius: 5px;
+}
+
+/*****************************************************************************/
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.product-card {
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 15px;
+    text-align: center;
+    background-color: white;
+}
+
+.product-image-placeholder {
+    width: 100%;
+    height: 150px;
+    background-color: #eee;
+    margin-bottom: 15px;
+}
+
+.product-price {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #0056b3;
+}
+
+.button {
+    display: inline-block;
+    background-color: #007bff;
+    color: white;
+    padding: 10px 15px;
+    text-decoration: none;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    margin-top: 20px;
+    background-color: #333;
+    color: white;
+}
+
+/* Estilos para la página de detalle del producto */
+.product-detail-container {
+    display: flex;
+    gap: 30px;
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+.product-gallery {
+    flex: 1;
+}
+
+.main-image-placeholder {
+    width: 100%;
+    height: 400px;
+    background-color: #eee;
+    border-radius: 5px;
+}
+
+.product-info {
+    flex: 1;
+}
+
+.product-info h1 {
+    margin-top: 0;
+}
+
+.product-info .price {
+    font-size: 1.8em;
+    font-weight: bold;
+    color: #0056b3;
+}
+
+.product-info .description {
+    margin: 20px 0;
+}
+
+.product-info form {
+    margin-top: 20px;
+}
+
+.product-info input[type="number"] {
+    width: 60px;
+    padding: 8px;
+    margin-right: 10px;
+}
+
+.product-extra-info {
+    margin-top: 30px;
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+}
+
+
+/* css/style.css */
+.checkout-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+}
+
+.customer-info {
+    flex: 2; /* Ocupa 2/3 del espacio */
+    min-width: 300px;
+}
+
+.order-summary {
+    flex: 1; /* Ocupa 1/3 del espacio */
+    background-color: #f9f9f9;
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    height: fit-content;
+}
+
+.customer-info form div {
+    margin-bottom: 15px;
+}
+
+.customer-info label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.customer-info input[type="text"],
+.customer-info input[type="tel"],
+.customer-info textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.summary-item, .summary-total {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.summary-total {
+    font-size: 1.2em;
+    padding-top: 10px;
+    border-top: 2px solid #ddd;
+}
+
+
+/* css/style.css */
+
+/* Contenedor principal que permite posicionar el zoom */
+.gallery-main-container {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.gallery-main {
+    width: 100%;
+    border: 1px solid #ddd;
+}
+
+/* AQUÍ AJUSTAMOS LA IMAGEN PARA QUE SE VEA COMPLETA */
+.gallery-main img, .gallery-main iframe {
+    width: 100%;
+    height: 400px;
+    object-fit: contain; /* <-- ESTE ES EL CAMBIO IMPORTANTE */
+    display: block;
+}
+
+/* Miniaturas */
+.gallery-thumbnails {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.thumbnail {
+    width: 80px;
+    height: 80px;
+    cursor: pointer;
+    border: 2px solid #ddd;
+    padding: 2px;
+}
+.thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.thumbnail:hover, .thumbnail.active {
+    border-color: #007bff;
+}
+
+/* ESTILOS PARA LA VENTANA DE ZOOM */
+.zoom-result {
+    display: none; /* Oculto por defecto */
+    position: absolute;
+    top: 0;
+    left: 105%; /* Se posiciona a la derecha de la imagen principal */
+    width: 100%;
+    height: 100%;
+    border: 1px solid #ddd;
+    background-repeat: no-repeat;
+    z-index: 10;
+}
+
+
+/* Estilos para el Modal de la Galería */
+/* El contenedor principal del modal (el fondo oscuro) */
+/* El fondo oscuro que ocupa toda la pantalla */
+/*
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.9);
+    align-items: center;
+    justify-content: center;
+}
+*/
+/* Contenedor del contenido (imagen o video) */
+/*
+.modal-content {
+    position: relative;
+    width: 90%;         
+    max-width: 1200px;   
+    display: flex;       
+}
+*/
+/* Estilos para el contenido que se genera dentro del modal */
+
+/* El div que contiene el iframe o la imagen */
+#modal-content-host {
+    width: 100%; /* <-- ESTA ES LA REGLA CLAVE QUE FALTABA */
+}
+
+/* Para las IMÁGENES dentro del modal */
+#modal-content-host img {
+    max-width: 100%;
+    max-height: 90vh;
+    display: block;
+    margin: auto;
+}
+
+/* Para los VIDEOS dentro del modal */
+#modal-content-host iframe {
+    width: 100%; /* Ocupa el 100% del contenedor modal-content */
+    aspect-ratio: 16 / 9;
+}
+/*
+.modal-close {
+    position: fixed;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
+*/
+.modal-prev, .modal-next {
+    cursor: pointer;
+    position: fixed;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 16px;
+    color: white;
+    font-weight: bold;
+    font-size: 24px;
+    user-select: none;
+}
+.modal-next { right: 15px; }
+.modal-prev { left: 15px; }
+/********************************************************************************Modal**/
+
+/* Hace que la imagen principal tenga el cursor de clic */
+.clickable-gallery-image {
+    cursor: pointer;
+}
+.inline-form {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+.inline-form input {
+    flex-grow: 1;
+}
+
+.contact-layout {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+}
+
+.contact-form {
+    flex: 2;
+    min-width: 300px;
+}
+
+.contact-info {
+    flex: 1;
+    min-width: 300px;
+}
+
+.contact-form div {
+    margin-bottom: 15px;
+}
+
+/* Estilos para el Dropdown del Perfil */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none; /* Oculto por defecto */
+    position: absolute;
+    right: 0;
+    background-color: #f9f9f9;
+    min-width: 220px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    border-radius: 5px;
+    overflow: hidden; /* Para que los bordes redondeados afecten a los hijos */
+}
+
+/* Mostrar el menú al pasar el ratón sobre el contenedor */
+.dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown-header {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #f1f1f1;
+    color: #333;
+}
+
+.dropdown-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
+.dropdown-item {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+}
+
+.dropdown-item:hover {
+    background-color: #ddd;
+}
+
+/***************************************** CREAR RESEÑAS *****************************************/
+
+/* Estilos para las Estrellas de Calificación */
+.rating {
+    display: inline-block;
+    border: none;
+    direction: rtl;
+    margin-bottom: 10px; /* Espacio extra debajo */
+}
+
+/* Ocultamos los radio buttons originales */
+.rating > input { display: none; }
+
+/* Estilo para las etiquetas (que ahora serán las estrellas) */
+.rating > label {
+    float: right;
+    font-size: 30px; /* Aumentamos el tamaño */
+    color: #ddd;
+    cursor: pointer;
+    margin: 0 3px; /* Añadimos separación entre las estrellas */
+    transition: color 0.2s;
+}
+
+/* Les damos la forma de estrella usando un caracter */
+.rating > label::before {
+    content: '★';
+}
+
+/* Coloreamos las estrellas al pasar el ratón o al seleccionarlas */
+.rating > input:checked ~ label,
+.rating:not(:checked) > label:hover,
+.rating:not(:checked) > label:hover ~ label {
+    color: #f7d106;
+}
+
+/*************************************************************************************************/
+
+/*Estilos Buscador*/
+
+.search-bar form {
+    display: flex;
+}
+.search-bar input[type="text"] {
+    border: 1px solid #ccc;
+    padding: 6px;
+    border-radius: 3px 0 0 3px;
+    border-right: none;
+}
+.search-bar button {
+    padding: 6px 10px;
+    border: 1px solid #007bff;
+    background: #007bff;
+    color: white;
+    cursor: pointer;
+    border-radius: 0 3px 3px 0;
+}
+/****************************************/
+
+
+/*Imagenes en productos-container*/
+.product-image-container {
+    width: 100%;
+    height: 180px; /* Altura fija para las tarjetas */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 15px;
+}
+.product-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Estilos para el contenido del modal de pedidos */
+.modal-content {
+    background-color: #fefefe;
+    color: #333; /* Asegura que el texto sea oscuro */
+    margin: 5% auto; /* Centra el modal verticalmente */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 700px;
+    border-radius: 8px;
+    position: relative;
+}
+
+/* Estilos para la tabla dentro del modal */
+#modal-order-content table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+#modal-order-content th, #modal-order-content td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+#modal-order-content th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+}
+
+/* Estilos para el nuevo menú de usuario */
+.user-menu-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+.nav-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.dropdown-arrow {
+    font-size: 12px;
+    margin-left: 5px;
+}
+/*Estilos del video producto detalle*/
+.video-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5; /* Se pone por encima del iframe */
+    cursor: pointer;
+}
+
+/*wishlist*/
+.wishlist-btn {
+    background: none;
+    border: 1px solid #ccc;
+    color: #555;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 15px;
+}
+.wishlist-btn.active {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-color: #f5c6cb;
+}
+
+/* estilos cards de productos */
+.card-img-top-container {
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.card-img-top {
+    max-height: 100%;
+    width: auto;
+    max-width: 100%;
+}
+
+/* Estilos para el Modal Personalizado */
+.custom-modal-overlay {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+.custom-modal-box {
+    background: white;
+    padding: 25px;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+.modal-buttons {
+    margin-top: 20px;
+}
+.modal-buttons button {
+    margin: 0 10px;
+}
+
+/* Estilos para la selección en la Biblioteca de Medios */
+.media-item-wrapper {
+    position: relative;
+    cursor: pointer;
+}
+
+.media-item.selected .media-item-wrapper::after {
+    content: '✔';
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 25px;
+    height: 25px;
+    background-color: #0d6efd; /* Color azul de Bootstrap */
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    border: 2px solid white;
+}
+
+.media-item.selected img {
+    outline: 3px solid #0d6efd;
+    opacity: 0.8;
+}
+
+/* Estilo para el botón de eliminar en la galería masiva */
+.remove-existing-image-btn {
+    /* Forma y Tamaño */
+    width: 22px;
+    height: 22px;
+    border-radius: 4px; /* Cuadro con bordes ligeramente redondeados */
+    
+    /* Posición */
+    top: -8px;
+    right: -8px;
+    
+    /* Color */
+    background-color: #dc3545; /* Rojo de Bootstrap */
+    color: white;
+    border: 2px solid white;
+    
+    /* Estilo de la "X" */
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 1; /* Centra la X verticalmente */
+    
+    /* Comportamiento */
+    cursor: pointer;
+    opacity: 0.9;
+    transition: opacity 0.2s;
+    
+    /* Centrado del contenido */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.remove-existing-image-btn:hover {
+    opacity: 1;
+}
+
+.toast-notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    border-radius: 5px;
+    background-color: #28a745;
+    color: white;
+    z-index: 2000;
+}
+
+/* Estilos para el menú de categorías multi-columna */
+.dropdown-menu-categorias {
+    width: 500px; /* Ancho del menú desplegable */
+}
+
+/* En pantallas pequeñas, hacemos que ocupe todo el ancho */
+@media (max-width: 768px) {
+    .dropdown-menu-categorias {
+        width: 100%;
+    }
+}
+
+/* Estilos para el ícono del carrito */
+#cartDropdown {
+    position: relative;
+}
+
+#cart-item-count {
+    position: absolute;
+    top: 0;
+    right: -5px;
+    font-size: 0.7em;
+    padding: 0.2em 0.5em;
+}
+
+#mini-cart-dropdown .product-item {
+    font-size: 0.9rem;
+}
+
+/* /css/style.css */
+
+/* Nuevo estilo llamativo para el contenedor del título */
+.category-title-wrapper {
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(90deg, rgba(6,9,10,1) 0%, rgba(52,58,64,1) 100%);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+/* Estilo para el título de la categoría */
+.category-title {
+    font-weight: 700;
+    color: #ffffff; /* Letras blancas para contrastar */
+    text-transform: uppercase;
+    font-size: 1.5rem;
+    margin: 0;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+}
+
+/* El botón "Ver todo" también necesita un ajuste de estilo para que se vea bien */
+.category-title-wrapper .btn-outline-primary {
+    border-color: #fff;
+    color: #fff;
+}
+
+.category-title-wrapper .btn-outline-primary:hover {
+    background-color: #fff;
+    color: #343a40;
+}
+
+/* --- ESTILOS GENERALES PARA TÍTULOS --- */
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Helvetica Neue', sans-serif; /* Una fuente más moderna (si está disponible) */
+    font-weight: 700; /* Letra más gruesa */
+    color: #343a40; /* Un negro menos intenso */
+    margin-bottom: 1rem;
+}
+
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.75rem; }

@@ -1,0 +1,31 @@
+/* /css/header-style.css */
+
+/* Estilo general del header */
+.navbar {
+    padding: 0.5rem 1rem;
+    transition: background-color 0.3s ease;
+}
+
+/* Estilo para los enlaces de navegación */
+.navbar .nav-link {
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.85);
+    transition: color 0.3s ease;
+}
+
+.navbar .nav-link:hover,
+.navbar .nav-link.active {
+    color: #ffffff;
+}
+
+/* Estilo del dropdown de categorías */
+.dropdown-menu-categorias {
+    border: none;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    margin-top: 0.5rem; /* Pequeña separación */
+}
+
+/* Estilo para el ícono y contador del carrito */
+#cartDropdown .badge {
+    transform: translate(-5px, -5px);
+}

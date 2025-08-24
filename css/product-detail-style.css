@@ -1,0 +1,21 @@
+/* /css/product-detail-style.css */
+
+.product-info .price {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+}
+
+.product-info .old-price {
+    font-size: 1.2rem;
+    color: #6c757d;
+    margin-left: 10px;
+}
+
+.product-info .description ul {
+    padding-left: 20px;
+}
+
+.nav-tabs .nav-link {
+    font-weight: 500;
+}

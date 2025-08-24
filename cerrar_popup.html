@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cerrando...</title>
+    <script>
+        // Le decimos a la ventana principal que vaya al index.php
+        if (window.opener) {
+            window.opener.location.href = 'index.php';
+        }
+        // Cerramos esta ventana.
+        window.close();
+    </script>
+</head>
+<body>
+    <p>Iniciando sesión... Puedes cerrar esta ventana si no lo hace automáticamente.</p>
+</body>
+</html>
