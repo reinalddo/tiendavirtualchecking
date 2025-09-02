@@ -1,6 +1,6 @@
 <?php
 // perfil.php
-require_once 'includes/header.php';
+require_once 'includes/config.php';
 require_once 'includes/db_connection.php';
 
 // Seguridad: Solo usuarios logueados
@@ -19,6 +19,7 @@ $stmt = $pdo->prepare("SELECT p.*,
     ORDER BY p.fecha_pedido DESC");
 $stmt->execute([$usuario_id]);
 $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+require_once 'includes/header.php';
 ?>
 
 <main>
@@ -104,6 +105,7 @@ $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                     <a href="generar_factura.php?pedido_id=<?php echo $pedido['id']; ?>" target="_blank" class="btn btn-sm btn-outline-primary">Factura</a>
                                                 <?php endif; ?>
                                                 <button class="btn btn-sm btn-secondary view-order-details-btn ms-2" data-pedido-id="<?php echo $pedido['id']; ?>">Ver Detalles</button>
+                                                <a href="mensajes_pedido.php?pedido_id=<?php echo $pedido['id']; ?>" class="btn btn-sm btn-info text-white ms-2">Mensajes</a>
                                             </td>
                                         </tr>
                                         <?php endforeach; ?>

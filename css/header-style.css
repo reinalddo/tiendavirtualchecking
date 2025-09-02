@@ -22,10 +22,60 @@
 .dropdown-menu-categorias {
     border: none;
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    margin-top: 0.5rem; /* Pequeña separación */
+    margin-top: 0; 
 }
 
 /* Estilo para el ícono y contador del carrito */
 #cartDropdown .badge {
     transform: translate(-5px, -5px);
+}
+
+/* /css/header-style.css */
+
+/* Estilos para el contenedor de resultados de búsqueda */
+#search-results-container {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-top: none;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: 1050; /* Debe estar por encima de otros elementos */
+    max-height: 400px;
+    overflow-y: auto;
+    display: none; /* Oculto por defecto */
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid #f0f0f0;
+    text-decoration: none;
+    color: #333;
+}
+
+.search-result-item:hover {
+    background-color: #f8f9fa;
+}
+
+.search-result-item img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    margin-right: 15px;
+    border-radius: 4px;
+}
+
+.search-result-item .info h6 {
+    margin: 0;
+    font-weight: bold;
+}
+
+.search-result-item .info p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #6c757d;
 }

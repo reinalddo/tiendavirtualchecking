@@ -15,7 +15,7 @@ $field = $_POST['field'] ?? '';
 $value = trim($_POST['value'] ?? '');
 
 // Lista blanca de campos permitidos para editar
-$allowed_fields = ['codigo', 'valor', 'usos_maximos', 'fecha_expiracion', 'es_activo'];
+$allowed_fields = ['codigo', 'valor', 'usos_maximos', 'fecha_expiracion', 'es_activo', 'monto_minimo_compra'];
 
 if ($id > 0 && in_array($field, $allowed_fields)) {
     // Conversiones y validaciones específicas

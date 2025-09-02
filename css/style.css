@@ -872,3 +872,23 @@ h1, h2, h3, h4, h5, h6 {
 h1 { font-size: 2.5rem; }
 h2 { font-size: 2rem; }
 h3 { font-size: 1.75rem; }
+
+.footer-dw
+{
+    color: #ffffff;
+}
+.testimonials-section {
+    border-top: 1px solid #e9ecef;
+}
+
+.testimonial-avatar {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border: 3px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.testimonial-rating {
+    color: #ffc107; /* Color de las estrellas (amarillo) */
+}

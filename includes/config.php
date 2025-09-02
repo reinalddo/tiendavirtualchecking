@@ -12,11 +12,7 @@ require_once __DIR__ . '/helpers.php';
 // Define la ruta base de la aplicación.
 define('BASE_URL', '/');
 
-// Claves de Stripe (reemplaza con tus claves de prueba)
 
-// Credenciales de Google
-
-// Establecer moneda por defecto en la primera visita
 if (!isset($_SESSION['moneda'])) {
     try {
         require_once __DIR__ . '/db_connection.php';

@@ -1,6 +1,5 @@
 <?php
 // admin/ver_pedidos.php
-require_once '../includes/header.php';
 require_once '../includes/db_connection.php';
 require_once '../includes/config.php';
 
@@ -16,7 +15,7 @@ $sql = "SELECT p.*, u.nombre_pila as nombre_cliente, cp.url_comprobante,
         (SELECT COUNT(*) FROM comprobantes_pago WHERE pedido_id = p.id) as total_comprobantes
         FROM pedidos p 
         JOIN usuarios u ON p.usuario_id = u.id
-        JOIN comprobantes_pago cp ON cp.pedido_id = p.id
+        LEFT JOIN comprobantes_pago cp ON cp.pedido_id = p.id
         ";
 $params = [];
 $titulo = "Ver Todos los Pedidos";
@@ -34,6 +33,8 @@ $sql .= " ORDER BY p.fecha_pedido DESC";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+require_once '../includes/header.php';
+
 ?>
 
 <div class="admin-panel">

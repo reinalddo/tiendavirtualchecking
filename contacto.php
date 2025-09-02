@@ -36,7 +36,7 @@ require_once 'includes/db_connection.php';
                     <h3>Nuestra Información</h3>
                     <p>
                         <strong>Email:</strong><br>
-                        <a href="mailto:ventas@mitienda.com">ventas@mitienda.com</a>
+                        <a href="mailto:reinalddo@gmail.com">ventas@mitienda.com</a>
                     </p>
                     <p>
                         <strong>Redes Sociales:</strong><br>

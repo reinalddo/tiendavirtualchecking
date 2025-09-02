@@ -96,9 +96,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const productForm = document.getElementById('product-form');
         const heroGalleryForm = document.getElementById('hero-gallery-form');
         const massProductForm = document.querySelector('.table-bordered');
+        const configForm = document.querySelector('form[action="configuracion_sitio.php"]'); 
 
+        if (configForm) {
+            if (selectedImages.length > 1) {
+                alert('Por favor, selecciona solo una imagen para el logo.');
+                return;
+            }
+            const selectedImage = selectedImages[0];
+            const fileName = selectedImage.dataset.filename;
+
+            // Actualizamos el campo oculto con el nuevo nombre de archivo
+            document.getElementById('tienda_logo_input').value = fileName;
+
+            // Actualizamos la imagen de vista previa
+            document.getElementById('logo-preview').src = BASE_URL + 'uploads/' + fileName;
+        }
         // Si estamos en el formulario de productos
-        if (productForm) {
+        else if (productForm) {
             const currentGallery = document.querySelector('.current-gallery');
             selectedImages.forEach(img => {
                 const fileName = img.dataset.filename;

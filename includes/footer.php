@@ -46,7 +46,7 @@
     <div class="container text-center text-md-start">
         <div class="row">
             <div class="col-md-4 mx-auto mb-4">
-                <h6 class="text-uppercase fw-bold">Mi Tienda</h6>
+                <h6 class="text-uppercase fw-bold footer-dw">Mi Tienda</h6>
                 <hr class="mb-4 mt-0 d-inline-block mx-auto" style="width: 60px; background-color: #7c4dff; height: 2px"/>
                 <p>
                     Aquí puedes escribir una breve descripción de tu tienda, tu misión o los productos que ofreces.
@@ -54,7 +54,7 @@
             </div>
 
             <div class="col-md-2 mx-auto mb-4">
-                <h6 class="text-uppercase fw-bold">Enlaces</h6>
+                <h6 class="text-uppercase fw-bold footer-dw">Enlaces</h6>
                 <hr class="mb-4 mt-0 d-inline-block mx-auto" style="width: 60px; background-color: #7c4dff; height: 2px"/>
                 <p><a href="<?php echo BASE_URL; ?>index.php" class="text-white">Inicio</a></p>
                 <p><a href="<?php echo BASE_URL; ?>productos.php" class="text-white">Productos</a></p>
@@ -62,7 +62,7 @@
             </div>
 
             <div class="col-md-4 mx-auto mb-4">
-                <h6 class="text-uppercase fw-bold">Contacto</h6>
+                <h6 class="text-uppercase fw-bold footer-dw">Contacto</h6>
                 <hr class="mb-4 mt-0 d-inline-block mx-auto" style="width: 60px; background-color: #7c4dff; height: 2px"/>
                 <p><i class="bi bi-geo-alt-fill me-3"></i> San Cristóbal, Táchira</p>
                 <p><i class="bi bi-envelope-fill me-3"></i> info@mitienda.com</p>
@@ -83,6 +83,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="<?php echo BASE_URL; ?>js/cart-dropdown.js"></script>
 <script src="<?php echo BASE_URL; ?>js/main.js"></script>
+<script src="<?php echo BASE_URL; ?>js/notificaciones.js"></script>
+<script src="<?php echo BASE_URL; ?>js/live-search.js"></script>
 
 <div class="modal fade" id="mediaLibraryModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">

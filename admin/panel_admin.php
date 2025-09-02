@@ -204,6 +204,17 @@ require_once '../includes/header.php';
             <div class="col">
                 <div class="card h-100 shadow-sm text-center">
                     <div class="card-body d-flex flex-column">
+                        <i class="bi bi-chat-dots-fill fs-1 text-primary"></i>
+                        <h5 class="card-title mt-3">Centro de Mensajes</h5>
+                        <p class="card-text text-muted">Gestionar conversaciones con clientes.</p>
+                        <a href="gestionar_mensajes.php" class="btn btn-primary mt-auto">Ir</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="card h-100 shadow-sm text-center">
+                    <div class="card-body d-flex flex-column">
                         <i class="bi bi-sliders fs-1 text-secondary"></i>
                         <h5 class="card-title mt-3">Configuración</h5>
                         <p class="card-text text-muted">Ajustar opciones generales del sitio.</p>

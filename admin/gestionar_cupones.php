@@ -16,11 +16,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $codigo = trim($_POST['codigo']);
         $tipo_descuento = $_POST['tipo_descuento'];
         $valor = $_POST['valor'];
+        $monto_minimo_compra = !empty($_POST['monto_minimo_compra']) ? $_POST['monto_minimo_compra'] : 0.00;
         $fecha_expiracion = !empty($_POST['fecha_expiracion']) ? $_POST['fecha_expiracion'] : null;
-        $stmt = $pdo->prepare("INSERT INTO cupones (codigo, tipo_descuento, valor, fecha_expiracion) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$codigo, $tipo_descuento, $valor, $fecha_expiracion]);
+        $stmt = $pdo->prepare("INSERT INTO cupones (codigo, tipo_descuento, valor, monto_minimo_compra, fecha_expiracion) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$codigo, $tipo_descuento, $valor, $monto_minimo_compra, $fecha_expiracion]);
+
     }
-    if (isset($_POST['delete_cupon'])) {
+    if (isset($_POST['cupon_id'])) {
         $cupon_id = $_POST['cupon_id'];
         $stmt = $pdo->prepare("DELETE FROM cupones WHERE id = ?");
         $stmt->execute([$cupon_id]);
@@ -58,6 +60,11 @@ require_once '../includes/header.php';
                                 <label for="valor" class="form-label">Valor:</label>
                                 <input type="number" id="valor" name="valor" class="form-control" step="0.01" required placeholder="Ej: 15 o 10.50">
                             </div>
+
+                            <div class="mb-3">
+                                <label for="monto_minimo_compra" class="form-label">Monto Mínimo de Compra (opcional):</label>
+                                <input type="number" id="monto_minimo_compra" name="monto_minimo_compra" class="form-control" step="0.01" placeholder="Ej: 20.00">
+                            </div>
                             <div class="mb-3">
                                 <label for="fecha_expiracion" class="form-label">Fecha de Expiración (opcional):</label>
                                 <input type="date" id="fecha_expiracion" name="fecha_expiracion" class="form-control">
@@ -81,6 +88,7 @@ require_once '../includes/header.php';
                                         <th>Código</th>
                                         <th>Tipo</th>
                                         <th>Valor</th>
+                                        <th>Mín. Compra</th>
                                         <th>Usos (actual/máx)</th>
                                         <th>Expiración</th>
                                         <th>¿Activo?</th>
@@ -93,6 +101,7 @@ require_once '../includes/header.php';
                                         <td><input type="text" class="form-control form-control-sm update-cupon" name="codigo" value="<?php echo htmlspecialchars($cupon['codigo'] ?? ''); ?>"></td>
                                         <td><?php echo htmlspecialchars($cupon['tipo_descuento']); ?></td>
                                         <td><input type="number" class="form-control form-control-sm update-cupon" name="valor" value="<?php echo htmlspecialchars($cupon['valor'] ?? ''); ?>"></td>
+                                        <td><input type="number" class="form-control form-control-sm update-cupon" name="monto_minimo_compra" value="<?php echo htmlspecialchars($cupon['monto_minimo_compra'] ?? ''); ?>"></td>
                                         <td>
                                             <div class="d-flex align-items-center">
                                                 <span><?php echo $cupon['usos_actuales']; ?> /</span>

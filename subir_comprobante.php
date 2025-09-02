@@ -36,6 +36,16 @@ if ($comprobante['error'] === UPLOAD_ERR_OK) {
         $stmt_insert = $pdo->prepare("INSERT INTO comprobantes_pago (pedido_id, url_comprobante) VALUES (?, ?)");
         $stmt_insert->execute([$pedido_id, $nombre_archivo]);
 
+        // --- GENERAR NOTIFICACIONES ---
+        $admins_ids = obtener_admins($pdo);
+        $mensaje_admin = "El cliente ha subido un comprobante para el pedido #" . $pedido_id;
+        $url_admin = BASE_URL . "admin/detalle_pedido.php?id=" . $pedido_id;
+
+        foreach ($admins_ids as $admin_id) {
+            crear_notificacion($pdo, $admin_id, $mensaje_admin, $url_admin);
+        }
+        // --- FIN NOTIFICACIONES ---
+
         $_SESSION['mensaje_carrito'] = '¡Comprobante subido exitosamente!';
     } else {
         $_SESSION['mensaje_carrito'] = 'Error: No se pudo subir el archivo.';

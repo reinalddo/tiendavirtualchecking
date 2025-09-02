@@ -1,0 +1,85 @@
+/* /css/style.css */
+
+/* --- ESTILOS PARA EL CENTRO DE MENSAJES --- */
+.chat-container {
+    max-width: 800px;
+    margin: auto;
+}
+
+.chat-box {
+    height: 500px;
+    overflow-y: auto;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column-reverse; /* Muestra los mensajes más nuevos abajo */
+}
+
+.message {
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.message .bubble {
+    padding: 10px 15px;
+    border-radius: 18px;
+    max-width: 75%;
+    word-wrap: break-word;
+}
+
+.message .timestamp {
+    font-size: 0.75rem;
+    color: #999;
+    margin-top: 5px;
+}
+
+/* Mensajes del Cliente (a la derecha) */
+.message.sent {
+    align-items: flex-end;
+}
+.message.sent .bubble {
+    background-color: #0d6efd;
+    border-bottom-right-radius: 4px;
+    color: white; 
+}
+.message.sent .bubble a {
+    color: white; /* El texto del enlace será blanco */
+    text-decoration: underline; /* PERO estará subrayado para que se identifique */
+    font-weight: bold; /* Lo hacemos negrita para que resalte aún más */
+}
+.message.sent .bubble a:hover {
+    text-decoration-thickness: 2px; /* Hacemos el subrayado más grueso */
+}
+
+/* Estilo para los mensajes RECIBIDOS (burbuja gris) */
+.message.received .bubble {
+    background-color: #e9ecef;
+    color: #333;
+}
+
+/* Estilo para los enlaces DENTRO de la burbuja gris */
+.message.received .bubble a {
+    color: #0d6efd; /* Usamos el color azul estándar para los enlaces */
+    text-decoration: underline;
+}
+
+.message.sent .timestamp {
+    text-align: right;
+    margin-right: 5px;
+}
+
+/* Mensajes del Admin (a la izquierda) */
+.message.received {
+    align-items: flex-start;
+}
+.message.received .bubble {
+    background-color: #e9ecef;
+    color: #333;
+    border-bottom-left-radius: 4px;
+}
+.message.received .timestamp {
+    margin-left: 5px;
+}

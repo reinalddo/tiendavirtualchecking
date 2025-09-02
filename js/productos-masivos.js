@@ -146,4 +146,84 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     }
 
+
+// --- LÓGICA PARA EL MODAL DE CATEGORÍAS ---
+const categoriasModal = document.getElementById('categoriasModal');
+if (categoriasModal) {
+    const modalTitleSpan = document.querySelector('#categoriasModalLabel span');
+    const modalCategoryList = document.getElementById('modal-category-list');
+    const modalProductoIdInput = document.getElementById('modalProductoIdCategorias');
+    const guardarCategoriasBtn = document.getElementById('guardarCategoriasBtn');
+
+    // Evento que se dispara justo cuando se empieza a mostrar el modal
+    categoriasModal.addEventListener('show.bs.modal', function(event) {
+        const button = event.relatedTarget;
+        const productoId = button.dataset.productoId;
+        const productoNombre = button.dataset.productoNombre;
+        const categoriasAsignadas = button.dataset.categoriasAsignadas.split(',');
+
+        // Actualizamos el título del modal y guardamos el ID del producto
+        modalTitleSpan.textContent = productoNombre;
+        modalProductoIdInput.value = productoId;
+
+        // Clonamos la lista de categorías desde nuestra nueva plantilla oculta
+        const categoriasTemplate = document.getElementById('categorias-template');
+        if (categoriasTemplate) {
+            modalCategoryList.innerHTML = categoriasTemplate.innerHTML;
+        }
+
+        // Marcamos los checkboxes que correspondan a las categorías ya asignadas
+        modalCategoryList.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            if (categoriasAsignadas.includes(checkbox.value)) {
+                checkbox.checked = true;
+            } else {
+                checkbox.checked = false;
+            }
+            // Eliminamos el manejador de eventos anterior para evitar envíos duplicados
+            checkbox.removeEventListener('change', () => {});
+            checkbox.classList.remove('update-producto-categoria');
+        });
+    });
+
+    // Evento para el botón de guardar dentro del modal
+    guardarCategoriasBtn.addEventListener('click', function() {
+        const productoId = modalProductoIdInput.value;
+        const selectedCategories = [];
+        modalCategoryList.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+            selectedCategories.push(checkbox.value);
+        });
+
+        const formData = new FormData();
+        formData.append('producto_id', productoId);
+        selectedCategories.forEach(id => {
+            formData.append('categoria_ids[]', id);
+        });
+
+        // Petición AJAX para guardar los cambios
+        fetch(BASE_URL + 'admin/ajax_save_product_categories.php', {
+            method: 'POST',
+            body: new URLSearchParams(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Actualizamos el texto en la tabla principal sin recargar la página
+                const displayDiv = document.getElementById(`categorias-display-${productoId}`);
+                if (displayDiv) {
+                    displayDiv.querySelector('small').textContent = data.nombres_categorias;
+                }
+                // También actualizamos el data-attribute del botón para futuras ediciones
+                const editButton = document.querySelector(`.btn-edit-categorias[data-producto-id="${productoId}"]`);
+                if(editButton) {
+                    editButton.dataset.categoriasAsignadas = selectedCategories.join(',');
+                }
+
+                bootstrap.Modal.getInstance(categoriasModal).hide();
+            } else {
+                alert('Error: ' + (data.error || 'No se pudieron guardar los cambios.'));
+            }
+        });
+    });
+}
+
 });

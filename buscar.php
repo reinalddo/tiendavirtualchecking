@@ -10,15 +10,27 @@ if (empty($termino_busqueda)) {
 } else {
     $titulo_pagina = "Resultados para: " . htmlspecialchars($termino_busqueda);
 
-    // Buscamos en el nombre y la descripción del producto
-    $sql = "SELECT p.*,
-            (SELECT gal.url FROM producto_galeria gal WHERE gal.producto_id = p.id AND gal.tipo = 'imagen' ORDER BY gal.orden ASC, gal.id ASC LIMIT 1) as imagen_principal
-            FROM productos p
-            WHERE p.es_activo = 1 
-            AND (p.nombre LIKE :termino OR p.descripcion_html LIKE :termino)";
-    
+    // --- NUEVA LÓGICA DE BÚSQUEDA ---
+    // 1. Limpiamos y preparamos el término
+    $base_term = rtrim($termino_busqueda, 's'); // Quitamos la 's' del final si existe
+
+    // 2. Creamos un término de búsqueda que incluya la raíz y el posible plural
+    // Ej: si buscas "tazas", buscará "taza*" O "tazas*"
+    $search_query = $base_term . '* ' . $base_term . 's*';
+
+$sql = "SELECT p.*,
+        (SELECT gal.url FROM producto_galeria gal WHERE gal.producto_id = p.id AND gal.tipo = 'imagen' ORDER BY gal.orden ASC, gal.id ASC LIMIT 1) as imagen_principal, 
+        -- Calculamos relevancias separadas y le damos más peso al nombre
+        (MATCH(p.nombre) AGAINST(:termino IN BOOLEAN MODE) * 5) as relevancia_nombre,
+        (MATCH(p.descripcion_html) AGAINST(:termino IN BOOLEAN MODE)) as relevancia_desc
+        FROM productos p
+        WHERE p.es_activo = 1 
+        AND MATCH(p.nombre, p.descripcion_html) AGAINST(:termino IN BOOLEAN MODE)
+        -- Ordenamos por la suma de las relevancias
+        ORDER BY relevancia_nombre DESC, relevancia_desc DESC";
+
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([':termino' => '%' . $termino_busqueda . '%']);
+    $stmt->execute([':termino' => $search_query]); 
     $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>

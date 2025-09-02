@@ -6,7 +6,7 @@ CREATE TABLE usuarios (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     email VARCHAR(191) NOT NULL UNIQUE, -- Reducimos la longitud para asegurar compatibilidad
-    password VARCHAR(255) NOT NULL,
+    PASSWORD VARCHAR(255) NOT NULL,
     rol ENUM('admin', 'cliente') NOT NULL DEFAULT 'cliente',
     fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     avatar_url VARCHAR(255) NULL
@@ -152,7 +152,7 @@ CREATE TABLE cupones (
     tipo_descuento ENUM('porcentaje', 'fijo') NOT NULL,
     valor DECIMAL(10, 2) NOT NULL,
     fecha_expiracion DATE,
-    usos_maximos INT DEFAULT 1,
+    usos_maximos INT DEFAULT 0,
     usos_actuales INT DEFAULT 0,
     es_activo BOOLEAN NOT NULL DEFAULT 1
 );
@@ -233,7 +233,7 @@ ALTER TABLE usuarios CHANGE nombre nombre_pila VARCHAR(100) NOT NULL;
 ALTER TABLE usuarios ADD COLUMN apellido VARCHAR(100) NULL AFTER nombre_pila;
 
 -- 3. Añadir la columna para el teléfono
-ALTER TABLE usuarios ADD COLUMN telefono VARCHAR(25) NULL AFTER password;
+ALTER TABLE usuarios ADD COLUMN telefono VARCHAR(25) NULL AFTER PASSWORD;
 
 -- 4. Añadir la columna para aceptar marketing
 ALTER TABLE usuarios ADD COLUMN acepta_marketing BOOLEAN NOT NULL DEFAULT 0 AFTER telefono;
@@ -259,3 +259,85 @@ ALTER TABLE comprobantes_pago
 ADD COLUMN estado ENUM('pendiente', 'aprobado', 'rechazado') NOT NULL DEFAULT 'pendiente';
 
 ALTER TABLE pedidos ADD COLUMN cupon_usado VARCHAR(50) NULL AFTER tasa_conversion_pedido;
+
+ALTER TABLE productos ADD FULLTEXT(nombre, descripcion_html);
+
+INSERT INTO configuraciones (nombre_setting, valor_setting) VALUES
+('tienda_razon_social', 'Mi Tienda Web C.A.'),
+('tienda_rif', 'J-12345678-9'),
+('tienda_domicilio_fiscal', 'Avenida Principal, Edificio Centro, Piso 1, Oficina 101, San Cristóbal, Táchira, Venezuela'),
+('tienda_telefono', '+58 276-1234567'),
+('iva_porcentaje', '16.00');
+INSERT INTO configuraciones (nombre_setting, valor_setting) VALUES ('tienda_logo', '');
+
+ALTER TABLE pedidos ADD COLUMN iva_total DECIMAL(10, 2) NOT NULL DEFAULT 0.00 AFTER total;
+
+ALTER TABLE cupones ADD COLUMN monto_minimo_compra DECIMAL(10, 2) NULL DEFAULT 0.00 AFTER valor;
+
+-- 1. Tabla para gestionar cada conversación (una por pedido)
+CREATE TABLE conversaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pedido_id INT NOT NULL,
+    cliente_id INT NOT NULL,
+    admin_id INT NOT NULL,
+    cliente_puede_responder BOOLEAN NOT NULL DEFAULT 1, -- 1 = Sí, 0 = No
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    ultima_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (pedido_id) REFERENCES pedidos(id) ON DELETE CASCADE,
+    FOREIGN KEY (cliente_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- 2. Tabla para guardar cada mensaje individual
+CREATE TABLE mensajes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    conversacion_id INT NOT NULL,
+    remitente_id INT NOT NULL, -- El ID del usuario que envió el mensaje
+    mensaje TEXT NOT NULL,
+    fecha_envio TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    leido BOOLEAN NOT NULL DEFAULT 0,
+    FOREIGN KEY (conversacion_id) REFERENCES conversaciones(id) ON DELETE CASCADE,
+    FOREIGN KEY (remitente_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+ALTER TABLE conversaciones DROP FOREIGN KEY conversaciones_ibfk_3;
+ALTER TABLE conversaciones DROP COLUMN admin_id;
+
+ALTER TABLE mensajes ADD COLUMN archivo_adjunto VARCHAR(255) NULL DEFAULT NULL, ADD COLUMN nombre_original_adjunto VARCHAR(255) NULL DEFAULT NULL;
+
+CREATE TABLE notificaciones (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    usuario_id INT NOT NULL,
+    mensaje VARCHAR(255) NOT NULL,
+    url VARCHAR(255),
+    leida BOOLEAN NOT NULL DEFAULT 0,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+ALTER TABLE `categorias` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `comprobantes_pago` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `configuraciones` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `conversaciones` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `cupones` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `hero_gallery` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `media_library` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `mensajes` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `monedas` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `notificaciones` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `pedido_detalles` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `pedido_imagenes` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `pedidos` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `preguntas_respuestas` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `producto_categorias` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `producto_galeria` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `productos` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `resenas` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `usuarios` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `wishlist` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+
+ALTER TABLE `cupones` 
+MODIFY `codigo` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+MODIFY `tipo_descuento` ENUM('porcentaje','fijo') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;
+
+

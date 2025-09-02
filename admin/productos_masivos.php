@@ -56,7 +56,7 @@ $total_paginas = ceil($total_resultados / $resultados_por_pagina);
 // Obtener los productos para la página actual
 $sql_productos = "SELECT p.*, GROUP_CONCAT(pg.id SEPARATOR '||') as galeria_ids,
            GROUP_CONCAT(pg.url SEPARATOR '||') as galeria_urls,
-           GROUP_CONCAT(c.nombre SEPARATOR ', ') as categorias_nombres,
+           GROUP_CONCAT(DISTINCT c.nombre SEPARATOR ', ') as categorias_nombres,
            GROUP_CONCAT(pc.categoria_id) as categorias_asignadas 
                   " . $base_sql . $where_sql . "
                   GROUP BY p.id
@@ -133,17 +133,29 @@ $todas_las_categorias = $pdo->query("SELECT id, nombre FROM categorias ORDER BY 
             <div class="table-responsive">
                 </div>
         </div>
-        <div class="card-footer">
-            <nav>
-                <ul class="pagination justify-content-center">
-                    <?php for ($i = 1; $i <= $total_paginas; $i++): ?>
-                        <li class="page-item <?php if ($i == $pagina_actual) echo 'active'; ?>">
-                            <a class="page-link" href="?pagina=<?php echo $i; ?>&<?php echo http_build_query($_GET, '', '&'); ?>"><?php echo $i; ?></a>
-                        </li>
-                    <?php endfor; ?>
-                </ul>
-            </nav>
-        </div>
+<div class="card-footer">
+    <nav>
+        <ul class="pagination justify-content-center">
+            <?php
+            // Preparamos los parámetros del filtro (q, categoria_id, etc.) quitando la paginación actual
+            $query_params = $_GET;
+            unset($query_params['pagina']);
+            $query_string = http_build_query($query_params);
+
+            // Asegurarnos de que el query_string no esté vacío y termine con '&' si tiene contenido
+            if (!empty($query_string)) {
+                $query_string .= '&';
+            }
+
+            for ($i = 1; $i <= $total_paginas; $i++):
+            ?>
+                <li class="page-item <?php if ($i == $pagina_actual) echo 'active'; ?>">
+                    <a class="page-link" href="?<?php echo $query_string; ?>pagina=<?php echo $i; ?>"><?php echo $i; ?></a>
+                </li>
+            <?php endfor; ?>
+        </ul>
+    </nav>
+</div>
     </div>
 
     
@@ -153,7 +165,7 @@ $todas_las_categorias = $pdo->query("SELECT id, nombre FROM categorias ORDER BY 
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered align-middle">
+                <table class="table table-striped table-hover table-bordered align-middle">
                     <thead>
                         <tr>
                             <th>SKU</th>
@@ -173,33 +185,19 @@ $todas_las_categorias = $pdo->query("SELECT id, nombre FROM categorias ORDER BY 
                             <td><input type="number" class="form-control form-control-sm update-producto" name="precio_usd" value="<?php echo htmlspecialchars($producto['precio_usd'] ?? ''); ?>" step="0.01"></td>
                             <td><input type="number" class="form-control form-control-sm update-producto" name="stock" value="<?php echo htmlspecialchars($producto['stock'] ?? ''); ?>"></td>
 
-                            <td class="categories-cell">
-                                <div class="row">
-                                    <?php
-                                    // Dividimos las categorías en 3 columnas
-                                    $categorias_producto = !empty($producto['categorias_asignadas']) ? explode(',', $producto['categorias_asignadas']) : [];
-                                    $categorias_por_columna = ceil(count($todas_las_categorias) / 3);
-                                    $columnas = array_chunk($todas_las_categorias, $categorias_por_columna);
-
-                                    foreach ($columnas as $columna):
-                                    ?>
-                                        <div class="col-4">
-                                            <?php foreach ($columna as $categoria): ?>
-                                                <div class="form-check">
-                                                    <input class="form-check-input update-producto-categoria" type="checkbox" 
-                                                        value="<?php echo $categoria['id']; ?>" 
-                                                        data-producto-id="<?php echo $producto['id']; ?>"
-                                                        <?php if (in_array($categoria['id'], $categorias_producto)) echo 'checked'; ?>>
-                                                    <label class="form-check-label">
-                                                        <?php echo htmlspecialchars($categoria['nombre']); ?>
-                                                    </label>
-                                                </div>
-                                            <?php endforeach; ?>
-                                        </div>
-                                    <?php endforeach; ?>
+                            <td>
+                                <div id="categorias-display-<?php echo $producto['id']; ?>" class="mb-2">
+                                    <small class="text-muted"><?php echo htmlspecialchars($producto['categorias_nombres'] ?? 'Sin categoría'); ?></small>
                                 </div>
+                                <button type="button" class="btn btn-sm btn-outline-primary btn-edit-categorias" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#categoriasModal" 
+                                        data-producto-id="<?php echo $producto['id']; ?>"
+                                        data-producto-nombre="<?php echo htmlspecialchars($producto['nombre']); ?>"
+                                        data-categorias-asignadas="<?php echo htmlspecialchars($producto['categorias_asignadas'] ?? ''); ?>">
+                                    Editar Categorías
+                                </button>
                             </td>
-
                             <td>
                                 <button type="button" class="btn btn-sm btn-outline-secondary btn-edit-descripcion" data-bs-toggle="modal" data-bs-target="#descripcionModal" data-descripcion="<?php echo htmlspecialchars($producto['descripcion_html']); ?>" data-producto-id="<?php echo $producto['id']; ?>">
                                     Editar Descripción
@@ -258,6 +256,45 @@ $todas_las_categorias = $pdo->query("SELECT id, nombre FROM categorias ORDER BY 
 </div>
 </div>
 </main>
+
+<div id="categorias-template" style="display: none;">
+    <?php
+    // Reutilizamos la variable que ya tienes con todas las categorías
+    $columnas_template = array_chunk($todas_las_categorias, ceil(count($todas_las_categorias) / 3));
+    foreach ($columnas_template as $columna):
+    ?>
+        <div class="col-md-4">
+            <?php foreach ($columna as $categoria): ?>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" value="<?php echo $categoria['id']; ?>" id="template-cat-<?php echo $categoria['id']; ?>">
+                    <label class="form-check-label" for="template-cat-<?php echo $categoria['id']; ?>">
+                        <?php echo htmlspecialchars($categoria['nombre']); ?>
+                    </label>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endforeach; ?>
+</div>
+
+<div class="modal fade" id="categoriasModal" tabindex="-1" aria-labelledby="categoriasModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="categoriasModalLabel">Editar Categorías para: <span></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalProductoIdCategorias">
+                <div id="modal-category-list" class="row">
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="guardarCategoriasBtn">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="<?php echo BASE_URL; ?>js/productos-masivos.js"></script>
 <script src="<?php echo BASE_URL; ?>js/media-library-modal.js"></script>

@@ -26,6 +26,17 @@ try {
     ");
     $categorias_destacadas = $stmt_cat_destacadas->fetchAll(PDO::FETCH_ASSOC);
 
+    // 3. OBTENER TESTIMONIOS/RESEÑAS 
+    $stmt_testimonios = $pdo->query("
+        SELECT r.calificacion, r.comentario, u.nombre_pila, u.avatar_manual, u.avatar_url
+        FROM resenas r
+        JOIN usuarios u ON r.usuario_id = u.id
+        WHERE r.es_aprobada = 1 AND r.comentario IS NOT NULL AND r.comentario != ''
+        ORDER BY r.fecha_creacion DESC
+        LIMIT 6
+    ");
+    $testimonios = $stmt_testimonios->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (PDOException $e) {
     die("Error: No se pudo obtener la información de la base de datos. " . $e->getMessage());
 }
@@ -102,5 +113,33 @@ try {
         </div>
     </div>
 </main>
+
+<?php if (!empty($testimonios)): ?>
+<section class="testimonials-section bg-light py-5">
+    <div class="container">
+        <h2 class="text-center mb-4">Lo que dicen nuestros clientes</h2>
+        <div class="row">
+            <?php foreach ($testimonios as $testimonio): ?>
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 text-center shadow-sm">
+                        <div class="card-body">
+                            <img src="<?php echo htmlspecialchars($testimonio['avatar_manual'] ? BASE_URL . 'uploads/avatars/' . $testimonio['avatar_manual'] : ($testimonio['avatar_url'] ?? BASE_URL . 'avatar/avatar-default.png')); ?>" alt="Avatar de cliente" class="testimonial-avatar rounded-circle mb-3">
+                            <p class="card-text">"<?php echo nl2br(htmlspecialchars($testimonio['comentario'])); ?>"</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-0">
+                            <div class="testimonial-rating">
+                                <?php for ($i = 0; $i < 5; $i++): ?>
+                                    <i class="bi <?php echo $i < $testimonio['calificacion'] ? 'bi-star-fill' : 'bi-star'; ?>"></i>
+                                <?php endfor; ?>
+                            </div>
+                            <h5 class="mt-2 mb-0"><?php echo htmlspecialchars($testimonio['nombre_pila']); ?></h5>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+<?php endif; ?>
 
 <?php require_once 'includes/footer.php'; ?>

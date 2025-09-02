@@ -1,36 +1,53 @@
 <?php
-// admin/detalle_pedido.php
+// admin/detalle_pedido.php (Versión Corregida)
 require_once '../includes/config.php';
 require_once '../includes/db_connection.php';
+require_once '../includes/helpers.php'; // Se incluye para la notificación
 
-//session_start();
+// Verificación de seguridad
 if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin' || !isset($_GET['id'])) {
     header('Location: ' . BASE_URL . 'login.php');
     exit();
 }
 
-$pedido_id = $_GET['id'];
+$pedido_id = (int)$_GET['id'];
 
-// Lógica para actualizar el estado
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_estado'])) {
-    $nuevo_estado = $_POST['estado'];
-    $stmt_update = $pdo->prepare("UPDATE pedidos SET estado = ? WHERE id = ?");
-    $stmt_update->execute([$nuevo_estado, $pedido_id]);
-    header("Location: detalle_pedido.php?id=" . $pedido_id);
-    exit();
-}
-
-// Obtener datos del pedido
+// --- CORRECCIÓN: OBTENEMOS LOS DATOS DEL PEDIDO ANTES DE CUALQUIER OTRA ACCIÓN ---
 $stmt_pedido = $pdo->prepare("SELECT p.*, u.nombre_pila as nombre_cliente, u.email as email_cliente 
                              FROM pedidos p JOIN usuarios u ON p.usuario_id = u.id WHERE p.id = ?");
 $stmt_pedido->execute([$pedido_id]);
 $pedido = $stmt_pedido->fetch(PDO::FETCH_ASSOC);
 
-// Obtener detalles del pedido
+// Si el pedido no existe, detenemos la ejecución.
+if (!$pedido) {
+    die('Pedido no encontrado.');
+}
+
+// AHORA PROCESAMOS EL FORMULARIO, YA CON LOS DATOS DEL PEDIDO DISPONIBLES
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_estado'])) {
+    $nuevo_estado = $_POST['estado'];
+    $stmt_update = $pdo->prepare("UPDATE pedidos SET estado = ? WHERE id = ?");
+    $stmt_update->execute([$nuevo_estado, $pedido_id]);
+
+    // Ahora $pedido['usuario_id'] sí existe y la notificación se crea correctamente
+    $mensaje_cliente = "El estado de tu pedido #" . $pedido_id . " ha cambiado a: " . $nuevo_estado;
+    $url_cliente = BASE_URL . "perfil.php";
+    crear_notificacion($pdo, $pedido['usuario_id'], $mensaje_cliente, $url_cliente);
+
+    header("Location: detalle_pedido.php?id=" . $pedido_id);
+    exit();
+}
+
+// Obtener detalles del pedido (productos)
 $stmt_detalles = $pdo->prepare("SELECT d.*, p.nombre as nombre_producto, p.sku as sku_producto
                                FROM pedido_detalles d JOIN productos p ON d.producto_id = p.id WHERE d.pedido_id = ?");
 $stmt_detalles->execute([$pedido_id]);
 $detalles = $stmt_detalles->fetchAll(PDO::FETCH_ASSOC);
+
+// Obtener el último comprobante
+$stmt_comprobante = $pdo->prepare("SELECT * FROM comprobantes_pago WHERE pedido_id = ? ORDER BY fecha_subida DESC LIMIT 1");
+$stmt_comprobante->execute([$pedido_id]);
+$comprobante = $stmt_comprobante->fetch(PDO::FETCH_ASSOC);
 
 // Lógica para el color del badge de estado
 $status_class = '';
@@ -43,11 +60,6 @@ switch (trim(strtolower($pedido['estado']))) {
 }
 
 require_once '../includes/header.php';
-
-$stmt_comprobante = $pdo->prepare("SELECT * FROM comprobantes_pago WHERE pedido_id = ? ORDER BY fecha_subida DESC LIMIT 1");
-$stmt_comprobante->execute([$pedido_id]);
-$comprobante = $stmt_comprobante->fetch(PDO::FETCH_ASSOC);
-
 ?>
 
 <main>
@@ -130,20 +142,24 @@ $comprobante = $stmt_comprobante->fetch(PDO::FETCH_ASSOC);
                                     <?php endforeach; ?>
                                 </tbody>
                                 <tfoot>
-                                    <?php if (!empty($pedido['cupon_usado'])): ?>
                                     <?php
-                                        // Calculamos el subtotal sin descuento sumando los productos
-                                        $subtotal_sin_descuento = 0;
+                                        // Calculamos el subtotal sumando los productos
+                                        $subtotal = 0;
                                         foreach ($detalles as $item) {
-                                            $subtotal_sin_descuento += $item['cantidad'] * $item['precio_unitario'];
+                                            $subtotal += $item['cantidad'] * $item['precio_unitario'];
                                         }
-                                        // El monto del descuento es la diferencia entre el subtotal y el total final
-                                        $monto_descuento = $subtotal_sin_descuento - $pedido['total'];
+                                        // Convertimos a la moneda del pedido
+                                        $subtotal_convertido = $subtotal * $pedido['tasa_conversion_pedido'];
                                     ?>
                                     <tr>
                                         <td colspan="3" class="text-end">Subtotal:</td>
-                                        <td class="text-end"><?php echo htmlspecialchars($pedido['moneda_pedido'] . ' ' . number_format($subtotal_sin_descuento, 2)); ?></td>
+                                        <td class="text-end"><?php echo htmlspecialchars($pedido['moneda_pedido'] . ' ' . number_format($subtotal_convertido, 2)); ?></td>
                                     </tr>
+                                    <?php if (!empty($pedido['cupon_usado'])):
+                                        // El descuento es la diferencia entre el subtotal y el (Total - IVA)
+                                        $subtotal_con_descuento = $pedido['total'] - $pedido['iva_total'];
+                                        $monto_descuento = $subtotal_convertido - $subtotal_con_descuento;
+                                    ?>
                                     <tr>
                                         <td colspan="3" class="text-end"><strong>Descuento (<?php echo htmlspecialchars($pedido['cupon_usado']); ?>):</strong></td>
                                         <td class="text-end text-success">- <?php echo htmlspecialchars($pedido['moneda_pedido'] . ' ' . number_format($monto_descuento, 2)); ?></td>
@@ -153,7 +169,6 @@ $comprobante = $stmt_comprobante->fetch(PDO::FETCH_ASSOC);
                                         <td colspan="3" class="text-end">Total del Pedido:</td>
                                         <td class="text-end"><?php echo htmlspecialchars($pedido['moneda_pedido'] . ' ' . number_format($pedido['total'], 2)); ?></td>
                                     </tr>
-
                                 </tfoot>
                             </table>
                         </div>
@@ -161,7 +176,6 @@ $comprobante = $stmt_comprobante->fetch(PDO::FETCH_ASSOC);
                 </div>
             </div>
         </div>
-
         <a href="ver_pedidos.php" class="btn btn-secondary mt-4">← Volver al listado de pedidos</a>
     </div>
 </main>

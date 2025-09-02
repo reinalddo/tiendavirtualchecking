@@ -23,7 +23,17 @@
             </div>
         </div>
         <div class="card-footer bg-transparent border-top-0">
-            <a href="producto_detalle.php?id=<?php echo $producto['id']; ?>" class="btn btn-primary w-100">Ver Detalles</a>
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                <a href="producto_detalle.php?id=<?php echo $producto['id']; ?>" class="btn btn-outline-secondary btn-sm flex-grow-1">Detalles</a>
+                <form action="carrito_acciones.php" method="POST" class="flex-grow-1">
+                    <input type="hidden" name="producto_id" value="<?php echo $producto['id']; ?>">
+                    <input type="hidden" name="cantidad" value="1">
+                    <input type="hidden" name="return_url" value="<?php echo $_SERVER['REQUEST_URI']; ?>">
+                    <button type="submit" name="agregar_al_carrito" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-cart-plus-fill"></i> Añadir
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

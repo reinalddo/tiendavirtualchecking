@@ -37,6 +37,7 @@ if (session_status() === PHP_SESSION_NONE) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>css/style.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>css/header-style.css">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>css/chat-style.css">
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>css/product-card-style.css">
 
 
@@ -55,9 +56,10 @@ if (session_status() === PHP_SESSION_NONE) {
             </button>
             <div class="collapse navbar-collapse" id="main-nav">
                 <form class="d-flex mx-auto" action="<?php echo BASE_URL; ?>buscar.php" method="GET">
-                    <input class="form-control me-2" type="search" name="q" placeholder="Buscar productos..." required>
+                    <input class="form-control me-2" id="search-input" type="search" name="q" placeholder="Buscar productos..." required autocomplete='off'>
                     <button class="btn btn-outline-success" type="submit">Buscar</button>
                 </form>
+                <div id="search-results-container"></div>
 
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
                     <li class="nav-item me-2">
@@ -153,6 +155,15 @@ if (session_status() === PHP_SESSION_NONE) {
                                 ?>
                             </select>
                         </form>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-bell-fill fs-4"></i>
+                            <span class="badge rounded-pill bg-danger" id="notification-count" style="position: absolute; top: 10px; right: -5px; display: none;"></span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-end p-2" id="notification-list" style="width: 350px;">
+                            <div class="text-center text-muted p-3">Cargando...</div>
+                        </div>
                     </li>
 
                 </ul>
