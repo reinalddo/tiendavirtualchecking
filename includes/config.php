@@ -12,7 +12,7 @@ require_once __DIR__ . '/helpers.php';
 // Define la ruta base de la aplicación.
 define('BASE_URL', '/');
 
-
+// Establecer moneda por defecto en la primera visita
 if (!isset($_SESSION['moneda'])) {
     try {
         require_once __DIR__ . '/db_connection.php';

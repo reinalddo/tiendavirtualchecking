@@ -1,28 +1,30 @@
 <?php
 // admin/configuracion_sitio.php
+// 1. TODA LA LÓGICA PHP PRIMERO
 require_once '../includes/config.php';
 require_once '../includes/db_connection.php';
+require_once '../includes/helpers.php';
 
 // Verificación de seguridad
 if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: /login.php');
+    header('Location: ' . BASE_URL . 'login.php');
     exit();
 }
 
 // Lógica para guardar los cambios
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Usamos un bucle para guardar todas las configuraciones enviadas
+    // Normalizamos los checkboxes
+    $_POST['pago_manual_activo'] = isset($_POST['pago_manual_activo']) ? '1' : '0';
+    $_POST['stripe_activo'] = isset($_POST['stripe_activo']) ? '1' : '0';
+    $_POST['payu_activo'] = isset($_POST['payu_activo']) ? '1' : '0';
+    $_POST['payu_test_mode'] = isset($_POST['payu_test_mode']) ? '1' : '0';
+    $_POST['mostrar_mapa_en_productos'] = isset($_POST['mostrar_mapa_en_productos']) ? '1' : '0';
+
+    // Guardamos todos los campos enviados
     foreach ($_POST as $nombre_setting => $valor_setting) {
-        if ($nombre_setting === 'mostrar_mapa_en_productos') continue; // Caso especial para el checkbox
-        
         $stmt = $pdo->prepare("UPDATE configuraciones SET valor_setting = ? WHERE nombre_setting = ?");
         $stmt->execute([trim($valor_setting), $nombre_setting]);
     }
-
-    // Manejo especial para el checkbox
-    $mostrar_mapa = isset($_POST['mostrar_mapa_en_productos']) ? '1' : '0';
-    $stmt_mapa = $pdo->prepare("UPDATE configuraciones SET valor_setting = ? WHERE nombre_setting = 'mostrar_mapa_en_productos'");
-    $stmt_mapa->execute([$mostrar_mapa]);
 
     $_SESSION['mensaje_carrito'] = '¡Configuración guardada!';
     header('Location: configuracion_sitio.php');
@@ -36,6 +38,8 @@ $config = [];
 foreach ($configuraciones_raw as $setting) {
     $config[$setting['nombre_setting']] = $setting['valor_setting'];
 }
+
+// 2. UNA VEZ TERMINADA LA LÓGICA, INCLUIMOS EL HEADER
 require_once '../includes/header.php';
 
 ?>
@@ -43,15 +47,13 @@ require_once '../includes/header.php';
 <main>
     <div class="container-fluid py-4">
         <h1 class="h2 mb-4">Configuración del Sitio</h1>
-        <div class="card shadow-sm">
-            <div class="card-header">
-                <h5 class="my-0 fw-normal">Ajustes Generales y Fiscales</h5>
-            </div>
-            <div class="card-body">
-                <form action="configuracion_sitio.php" method="POST">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h5>Datos Fiscales de la Tienda</h5>
+        <form action="configuracion_sitio.php" method="POST">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header"><h5 class="my-0 fw-normal">Datos Fiscales y de la Tienda</h5></div>
+                        <div class="card-body">
+
                             <div class="mb-3">
                                 <label for="tienda_razon_social" class="form-label">Razón Social:</label>
                                 <input type="text" id="tienda_razon_social" name="tienda_razon_social" class="form-control" value="<?php echo htmlspecialchars($config['tienda_razon_social'] ?? ''); ?>">
@@ -86,35 +88,70 @@ require_once '../includes/header.php';
                                 <label for="iva_porcentaje" class="form-label">Porcentaje de IVA (%):</label>
                                 <input type="number" id="iva_porcentaje" name="iva_porcentaje" class="form-control" step="0.01" value="<?php echo htmlspecialchars($config['iva_porcentaje'] ?? '16.00'); ?>">
                             </div>
-                        </div>
-
-                        <div class="col-md-6">
-                            <h5>Otros Ajustes</h5>
-                            <div class="mb-3">
-                                <label for="metodos_pago_activos" class="form-label">Métodos de Pago Activos:</label>
-                                <select name="metodos_pago_activos" id="metodos_pago_activos" class="form-select">
-                                    <option value="ambos" <?php if (($config['metodos_pago_activos'] ?? '') == 'ambos') echo 'selected'; ?>>Ambos (Tarjeta y Manual)</option>
-                                    <option value="stripe" <?php if (($config['metodos_pago_activos'] ?? '') == 'stripe') echo 'selected'; ?>>Solo Ventas con Tarjeta</option>
-                                    <option value="manual" <?php if (($config['metodos_pago_activos'] ?? '') == 'manual') echo 'selected'; ?>>Solo Ventas Manuales</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="mapa_principal" class="form-label">Código del Mapa Principal (Google Maps Embed):</label>
-                                <textarea id="mapa_principal" name="mapa_principal" class="form-control" rows="6"><?php echo htmlspecialchars($config['mapa_principal'] ?? ''); ?></textarea>
-                            </div>
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" name="mostrar_mapa_en_productos" value="1" id="mostrar_mapa" <?php echo !empty($config['mostrar_mapa_en_productos']) ? 'checked' : ''; ?>>
-                                <label class="form-check-label" for="mostrar_mapa">
-                                    Mostrar mapa en todas las páginas de productos
-                                </label>
-                            </div>
+                        
                         </div>
                     </div>
-                    <hr>
-                    <button type="submit" class="btn btn-primary">Guardar Configuración</button>
-                </form>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header"><h5 class="my-0 fw-normal">Métodos de Pago</h5></div>
+                        <div class="card-body">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" id="pago_manual_activo" name="pago_manual_activo" value="1" <?php echo !empty($config['pago_manual_activo']) ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="pago_manual_activo"><h5><i class="bi bi-cash-coin"></i> Ventas Manuales</h5></label>
+                            </div>
+                            <hr>
+
+                            <div class="form-check form-switch mb-2">
+                                <input class="form-check-input" type="checkbox" id="stripe_activo" name="stripe_activo" value="1" <?php echo !empty($config['stripe_activo']) ? 'checked' : ''; ?>>
+                                <label class="form-check-label" for="stripe_activo"><h5><i class="bi bi-stripe"></i> Stripe (Tarjetas Internacionales)</h5></label>
+                            </div>
+                            <div class="mb-3">
+                                <label for="stripe_public_key" class="form-label">Stripe Publishable Key:</label>
+                                <input type="text" id="stripe_public_key" name="stripe_public_key" class="form-control" value="<?php echo htmlspecialchars($config['stripe_public_key'] ?? ''); ?>">
+                            </div>
+                            <div class="mb-3">
+                                <label for="stripe_secret_key" class="form-label">Stripe Secret Key:</label>
+                                <input type="password" id="stripe_secret_key" name="stripe_secret_key" class="form-control" value="<?php echo htmlspecialchars($config['stripe_secret_key'] ?? ''); ?>">
+                            </div>
+                            <hr>
+
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h5><i class="bi bi-credit-card-2-back-fill"></i> PayU Latam</h5>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" name="payu_activo" value="1" <?php echo !empty($config['payu_activo']) ? 'checked' : ''; ?>>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Merchant ID:</label>
+                                <input type="text" name="payu_merchant_id" class="form-control" value="<?php echo htmlspecialchars($config['payu_merchant_id'] ?? ''); ?>">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">API Key:</label>
+                                <input type="password" name="payu_api_key" class="form-control" value="<?php echo htmlspecialchars($config['payu_api_key'] ?? ''); ?>">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Account ID:</label>
+                                <input type="text" name="payu_account_id" class="form-control" value="<?php echo htmlspecialchars($config['payu_account_id'] ?? ''); ?>">
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="payu_test_mode" value="1" <?php echo !empty($config['payu_test_mode']) ? 'checked' : ''; ?>>
+                                <label class="form-check-label">Modo de Pruebas (Test)</label>
+                            </div>
+
+
+                        </div>
+                    </div>
+                </div>
             </div>
-        </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-body text-end">
+                    <button type="submit" class="btn btn-primary">Guardar Toda la Configuración</button>
+                </div>
+            </div>
+        </form>
     </div>
 </main>
 <script src="<?php echo BASE_URL; ?>js/media-library-modal.js"></script>

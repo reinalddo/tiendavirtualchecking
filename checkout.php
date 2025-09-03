@@ -12,34 +12,28 @@ if (empty($_SESSION['carrito'])) {
     header('Location: ' . BASE_URL . 'ver_carrito.php');
     exit();
 }
-$stmt_config = $pdo->query("SELECT valor_setting FROM configuraciones WHERE nombre_setting = 'metodos_pago_activos'");
-$metodos_pago_activos = $stmt_config->fetchColumn();
+// 1. OBTENER LA CONFIGURACIÓN DE PAGOS
+$stmt_config = $pdo->query("SELECT nombre_setting, valor_setting FROM configuraciones");
+$config_list = $stmt_config->fetchAll(PDO::FETCH_ASSOC);
+$config = [];
+foreach ($config_list as $setting) {
+    $config[$setting['nombre_setting']] = $setting['valor_setting'];
+}
 
 $carrito = $_SESSION['carrito'] ?? [];
 $productos_en_carrito = [];
 $total_carrito_usd = 0;
-
 if (!empty($carrito)) {
     $ids = array_keys($carrito);
     $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    
-    // Obtenemos los precios de la base de datos
     $stmt = $pdo->prepare("SELECT id, nombre, precio_usd, precio_descuento FROM productos WHERE id IN ($placeholders)");
     $stmt->execute($ids);
     $productos_db = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
     foreach ($productos_db as $producto) {
         $cantidad = $carrito[$producto['id']];
-        
-        // --- LÓGICA DE DESCUENTO ---
-        // Usamos el precio de descuento si está disponible y es mayor a cero
-        $precio_a_usar = (!empty($producto['precio_descuento']) && $producto['precio_descuento'] > 0) 
-                         ? $producto['precio_descuento'] 
-                         : $producto['precio_usd'];
-        
+        $precio_a_usar = (!empty($producto['precio_descuento']) && $producto['precio_descuento'] > 0) ? $producto['precio_descuento'] : $producto['precio_usd'];
         $subtotal_usd = $precio_a_usar * $cantidad;
         $total_carrito_usd += $subtotal_usd;
-        
         $producto['cantidad'] = $cantidad;
         $producto['subtotal_usd'] = $subtotal_usd;
         $productos_en_carrito[] = $producto;
@@ -80,29 +74,41 @@ require_once 'includes/header.php';
                     
                     <h4 class="mt-4">Método de Pago</h4>
 
+
                     <div class="payment-methods">
-                        <?php if ($metodos_pago_activos == 'stripe' || $metodos_pago_activos == 'ambos'): ?>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="metodo_pago" id="pago_stripe" value="stripe" checked>
-                            <label class="form-check-label" for="pago_stripe">Pagar con Tarjeta</label>
-                        </div>
+                        <?php $primer_metodo_activo = ''; ?>
+
+                        <?php if (!empty($config['pago_manual_activo'])): ?>
+                            <?php if (empty($primer_metodo_activo)) $primer_metodo_activo = 'manual'; ?>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="metodo_pago" id="pago_manual" value="manual" <?php if ($primer_metodo_activo == 'manual') echo 'checked'; ?>>
+                                <label class="form-check-label" for="pago_manual">Pago Manual (Transferencia / Pago Móvil)</label>
+                            </div>
                         <?php endif; ?>
 
-                        <?php if ($metodos_pago_activos == 'manual' || $metodos_pago_activos == 'ambos'): ?>
-                        <div class="form-check mb-3">
-                            <input class="form-check-input" type="radio" name="metodo_pago" id="pago_manual" value="manual" <?php if ($metodos_pago_activos == 'manual') echo 'checked'; ?>>
-                            <label class="form-check-label" for="pago_manual">Pago Manual (Transferencia)</label>
-                        </div>
+                        <?php if (!empty($config['stripe_activo']) && !empty($config['stripe_public_key']) && !empty($config['stripe_secret_key'])): ?>
+                            <?php if (empty($primer_metodo_activo)) $primer_metodo_activo = 'stripe'; ?>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="metodo_pago" id="pago_stripe" value="stripe" <?php if ($primer_metodo_activo == 'stripe') echo 'checked'; ?>>
+                                <label class="form-check-label" for="pago_stripe">Pagar con Tarjeta (Internacional)</label>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if (!empty($config['payu_activo']) && !empty($config['payu_merchant_id']) && !empty($config['payu_api_key']) && !empty($config['payu_account_id'])):
+                            if (empty($primer_metodo_activo)) $primer_metodo_activo = 'payu'; ?>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" name="metodo_pago" id="pago_payu" value="payu" <?php if ($primer_metodo_activo == 'payu') echo 'checked'; ?>>
+                                <label class="form-check-label" for="pago_payu">Pagar con Tarjeta (PayU)</label>
+                            </div>
                         <?php endif; ?>
                     </div>
-                    
-                    <div class="mb-3" id="stripe-payment-form">
+
+                    <div class="mb-3 mt-3" id="stripe-payment-form" style="display:none;">
                         <label for="card-element" class="form-label">Tarjeta de Crédito o Débito</label>
-                        <div id="card-element">
-                          </div>
+                        <div id="card-element" class="form-control"></div>
                         <div id="card-errors" role="alert" class="text-danger mt-2"></div>
                     </div>
-                    
+
                     <input type="hidden" name="stripeToken" id="stripeToken">
                     
                     <div class="d-grid mt-4">
@@ -137,73 +143,50 @@ require_once 'includes/header.php';
 </div>
 
 
-
+<?php if (!empty($config['stripe_activo']) && !empty($config['stripe_public_key']) && !empty($config['stripe_secret_key'])): ?>
 <script src="https://js.stripe.com/v3/"></script>
+<?php endif; ?>
+
 <script>
-    // Creamos una instancia de Stripe con tu clave publicable
-    const stripe = Stripe('<?php echo STRIPE_PUBLISHABLE_KEY; ?>');
-    const elements = stripe.elements();
-    
-    // Estilos para el elemento de la tarjeta
-    const style = {
-        base: { fontSize: '16px', color: '#32325d' }
-    };
-    
-    // Creamos y montamos el elemento de la tarjeta
-    const card = elements.create('card', {style: style});
-    card.mount('#card-element');
+document.addEventListener('DOMContentLoaded', function() {
+    // Lógica para mostrar/ocultar el formulario de Stripe
+    const stripeForm = document.getElementById('stripe-payment-form');
+    const paymentRadios = document.querySelectorAll('input[name="metodo_pago"]');
 
-    // Manejar errores de validación en tiempo real
-    card.on('change', function(event) {
-        const displayError = document.getElementById('card-errors');
-        if (event.error) {
-            displayError.textContent = event.error.message;
-        } else {
-            displayError.textContent = '';
+    function togglePaymentForms() {
+        const selectedMethod = document.querySelector('input[name="metodo_pago"]:checked').value;
+        if (stripeForm) {
+            stripeForm.style.display = (selectedMethod === 'stripe') ? 'block' : 'none';
         }
-    });
+    }
 
-    // Manejar el envío del formulario
+    paymentRadios.forEach(radio => radio.addEventListener('change', togglePaymentForms));
+    togglePaymentForms(); // Ejecutar al cargar
+
+    // --- LÓGICA DE STRIPE ---
+    <?php if (!empty($config['stripe_activo']) && !empty($config['stripe_public_key']) && !empty($config['stripe_secret_key'])): ?>
+    const stripe = Stripe('<?php echo $config['stripe_public_key']; ?>');
+    const elements = stripe.elements();
+    const cardElement = elements.create('card');
+    cardElement.mount('#card-element');
+
     const form = document.getElementById('payment-form');
     form.addEventListener('submit', function(event) {
-        // Verificamos qué método de pago está seleccionado
-        const paymentMethod = document.querySelector('input[name="metodo_pago"]:checked').value;
-
-        // Si el método es 'stripe', validamos la tarjeta.
-        // Si es 'manual', el formulario se enviará normalmente.
-        if (paymentMethod === 'stripe') {
-            event.preventDefault(); // Prevenimos el envío para que Stripe procese la tarjeta
-
-            stripe.createToken(card).then(function(result) {
+        const selectedMethod = document.querySelector('input[name="metodo_pago"]:checked').value;
+        if (selectedMethod === 'stripe') {
+            event.preventDefault();
+            stripe.createToken(cardElement).then(function(result) {
                 if (result.error) {
-                    // Informar al usuario si hubo un error en la tarjeta
-                    const errorElement = document.getElementById('card-errors');
-                    errorElement.textContent = result.error.message;
+                    document.getElementById('card-errors').textContent = result.error.message;
                 } else {
-                    // Si todo va bien, insertamos el token y enviamos el formulario
                     document.getElementById('stripeToken').value = result.token.id;
                     form.submit();
                 }
             });
         }
-        // Si el método de pago es 'manual', no hacemos nada aquí y permitimos
-        // que el formulario se envíe de la forma tradicional.
     });
-
-    function toggleStripeForm() {
-        const paymentMethod = document.querySelector('input[name="metodo_pago"]:checked').value;
-        document.getElementById('stripe-payment-form').style.display = paymentMethod === 'stripe' ? 'block' : 'none';
-    }
-
-    // Ocultar/mostrar al cambiar la selección
-    document.querySelectorAll('input[name="metodo_pago"]').forEach(radio => {
-        radio.addEventListener('change', toggleStripeForm);
-    });
-
-    // Ocultar/mostrar al cargar la página
-    document.addEventListener('DOMContentLoaded', toggleStripeForm);
-
-
+    <?php endif; ?>
+});
 </script>
 
 <?php require_once 'includes/footer.php'; ?>

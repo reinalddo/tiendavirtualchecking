@@ -1,116 +1,140 @@
 <?php
-//session_start();
+// procesar_pedido.php (Versión Completa y Actualizada con Mercado Pago)
+session_start();
 require_once 'includes/config.php';
 require_once 'includes/db_connection.php';
+require_once 'includes/helpers.php';
 
-// Verificaciones de seguridad
+// 1. OBTENER LA CONFIGURACIÓN COMPLETA DESDE LA BASE DE DATOS
+$stmt_config = $pdo->query("SELECT nombre_setting, valor_setting FROM configuraciones");
+$config_list = $stmt_config->fetchAll(PDO::FETCH_ASSOC);
+$config = [];
+foreach ($config_list as $setting) {
+    $config[$setting['nombre_setting']] = $setting['valor_setting'];
+}
+
+// 2. VERIFICACIONES DE SEGURIDAD
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id']) || empty($_SESSION['carrito'])) {
     header('Location: ' . BASE_URL . 'index.php');
     exit();
 }
 
-// Obtener el porcentaje de IVA de la configuración
-$stmt_iva = $pdo->query("SELECT valor_setting FROM configuraciones WHERE nombre_setting = 'iva_porcentaje'");
-$iva_porcentaje = $stmt_iva->fetchColumn() ?: 16.00; // Por defecto 16% si no está configurado
-
-// Recoger datos comunes
+// 3. DATOS INICIALES DEL PEDIDO
 $usuario_id = $_SESSION['usuario_id'];
-$direccion_envio = trim($_POST['direccion']);
-$metodo_pago = $_POST['metodo_pago'] ?? '';
 $carrito = $_SESSION['carrito'];
-$moneda_seleccionada = $_SESSION['moneda'];
-
-// Calcular total en USD
-$ids = array_keys($carrito);
-$placeholders = implode(',', array_fill(0, count($ids), '?'));
-$stmt = $pdo->prepare("SELECT * FROM productos WHERE id IN ($placeholders)");
-$stmt->execute($ids);
-$productos_db_raw = $stmt->fetchAll(PDO::FETCH_ASSOC);
-$productos_db = [];
-foreach ($productos_db_raw as $producto) { $productos_db[$producto['id']] = $producto; }
-
-$subtotal_con_iva_usd = 0;
-foreach ($carrito as $id => $cantidad) {
-    $producto = $productos_db[$id];
-    $precio_a_usar = (!empty($producto['precio_descuento']) && $producto['precio_descuento'] > 0) 
-                     ? $producto['precio_descuento'] 
-                     : $producto['precio_usd'];
-    $subtotal_con_iva_usd += $precio_a_usar * $cantidad;
-}
-
-// 2. Aplicar descuento sobre el total
-$descuento_usd = 0;
-$cupon_aplicado = $_SESSION['cupon'] ?? null;
-$codigo_cupon_usado = $cupon_aplicado ? $cupon_aplicado['codigo'] : null;
-if ($cupon_aplicado) {
-    if ($cupon_aplicado['tipo_descuento'] == 'porcentaje') {
-        $descuento_usd = ($subtotal_con_iva_usd * $cupon_aplicado['valor']) / 100;
-    } else {
-        $descuento_usd = $cupon_aplicado['valor'];
-    }
-}
-
-// 3. Calcular el Total Final (con IVA y descuento)
-$total_final_usd = $subtotal_con_iva_usd - $descuento_usd;
-
-// 4. Desglosar el IVA del Total Final
-// Formula: Base = Total / (1 + (Tasa / 100))
-$base_imponible_usd = $total_final_usd / (1 + ($iva_porcentaje / 100));
-$iva_total_usd = $total_final_usd - $base_imponible_usd;
+$metodo_pago = $_POST['metodo_pago'] ?? '';
+$direccion_envio = trim($_POST['direccion'] ?? '');
+$estado_pedido = 'Pendiente de Pago'; // Todos los pedidos empiezan como pendientes
 
 try {
-    $estado_pedido = '';
-    
-    // CASO 1: PAGO CON STRIPE
-    if ($metodo_pago === 'stripe') {
-        $token = $_POST['stripeToken'] ?? '';
-        if (empty($token)) {
-            throw new Exception("No se proporcionó un token de pago válido.");
-        }
-        
-        $total_en_centavos = round($total_final_usd * 100);
-        \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+    // --- 4. CÁLCULO DE TOTALES ---
+    $subtotal_usd = 0;
+    $ids = array_keys($carrito);
+    if (empty($ids)) {
+        throw new Exception("El carrito está vacío.");
+    }
+    $placeholders = implode(',', array_fill(0, count($ids), '?'));
+    $stmt_productos = $pdo->prepare("SELECT * FROM productos WHERE id IN ($placeholders)");
+    $stmt_productos->execute($ids);
+    $productos_db_raw = $stmt_productos->fetchAll(PDO::FETCH_ASSOC);
+    $productos_db = [];
+    foreach($productos_db_raw as $p) { $productos_db[$p['id']] = $p; }
 
-        $charge = \Stripe\Charge::create([
-            'amount' => $total_en_centavos,
-            'currency' => 'usd',
-            'description' => 'Pedido para el usuario ' . $usuario_id,
-            'source' => $token,
-        ]);
-
-        if ($charge->status == 'succeeded') {
-            $estado_pedido = 'Pagado';
+    foreach ($carrito as $id => $cantidad) {
+        $producto = $productos_db[$id];
+        $precio_a_usar = (!empty($producto['precio_descuento']) && $producto['precio_descuento'] > 0) 
+                         ? $producto['precio_descuento'] 
+                         : $producto['precio_usd'];
+        $subtotal_usd += $precio_a_usar * $cantidad;
+    }
+    $descuento_usd = 0;
+    $cupon_aplicado = $_SESSION['cupon'] ?? null;
+    $codigo_cupon_usado = $cupon_aplicado ? $cupon_aplicado['codigo'] : null;
+    if ($cupon_aplicado) {
+        if ($cupon_aplicado['tipo_descuento'] == 'porcentaje') {
+            $descuento_usd = ($subtotal_con_iva_usd * $cupon_aplicado['valor']) / 100;
         } else {
-            throw new Exception("El pago con Stripe no fue exitoso.");
+            $descuento_usd = $cupon_aplicado['valor'];
         }
-    } 
-    // CASO 2: PAGO MANUAL
-    elseif ($metodo_pago === 'manual') {
-        $estado_pedido = 'Pendiente de Pago';
-    } 
-    else {
-        throw new Exception("Método de pago no válido.");
+    }
+    $total_final_usd = $subtotal_usd;
+
+    // --- 5. MANEJAR LA PASARELA DE PAGO ---
+    switch ($metodo_pago) {
+        case 'manual':
+            if (empty($config['pago_manual_activo'])) throw new Exception("Método de pago no disponible.");
+            // La lógica para guardar el pedido se hará más abajo
+            break;
+
+        case 'stripe':
+            if (empty($config['stripe_activo'])) throw new Exception("Método de pago no disponible.");
+            
+            \Stripe\Stripe::setApiKey($config['stripe_secret_key']);
+            $token = $_POST['stripeToken'] ?? '';
+            if (empty($token)) throw new Exception("Token de pago no válido.");
+
+            $charge = \Stripe\Charge::create([
+                'amount' => round($total_final_usd * 100),
+                'currency' => 'usd',
+                'description' => 'Pedido para el usuario ' . $usuario_id,
+                'source' => $token,
+            ]);
+
+            if ($charge->status == 'succeeded') {
+                $estado_pedido = 'Pagado'; // El estado cambia a Pagado
+            } else {
+                throw new Exception("El pago con Stripe no fue exitoso.");
+            }
+            break;
+
+        case 'payu':
+            if (empty($config['payu_activo'])) throw new Exception("Método de pago no disponible.");
+            
+            // Configurar SDK de PayU
+            OpenPayU_Configuration::setApiKey($config['payu_api_key']);
+            OpenPayU_Configuration::setApiLogin("pRRXKOl8ikMmt9u");
+            OpenPayU_Configuration::setMerchantId($config['payu_merchant_id']);
+            OpenPayU_Configuration::setIsTest(!empty($config['payu_test_mode']));
+            OpenPayU_Configuration::setLanguage('es');
+
+            $referenceCode = "PEDIDO_" . $pedido_id . "_" . time();
+            $signature = md5($config['payu_api_key'] . "~" . $config['payu_merchant_id'] . "~" . $referenceCode . "~" . $total_final_usd . "~USD");
+            $payu_url = OpenPayU_Configuration::getWebCheckoutUrl();
+
+            echo '<body onload="document.forms[0].submit()">
+                    <p>Redirigiendo a PayU para completar el pago de forma segura...</p>
+                    <form action="' . $payu_url . '" method="post">
+                        <input name="merchantId" type="hidden" value="' . htmlspecialchars($config['payu_merchant_id']) . '">
+                        <input name="accountId" type="hidden" value="' . htmlspecialchars($config['payu_account_id']) . '">
+                        <input name="description" type="hidden" value="Compra en Mi Tienda - Pedido #' . $pedido_id . '">
+                        <input name="referenceCode" type="hidden" value="' . htmlspecialchars($referenceCode) . '">
+                        <input name="amount" type="hidden" value="' . htmlspecialchars($total_final_usd) . '">
+                        <input name="currency" type="hidden" value="USD">
+                        <input name="signature" type="hidden" value="' . htmlspecialchars($signature) . '">
+                        <input name="test" type="hidden" value="' . ($config['payu_test_mode'] ? '1' : '0') . '">
+                        <input name="buyerEmail" type="hidden" value="' . htmlspecialchars($email_cliente) . '">
+                        <input name="responseUrl" type="hidden" value="' . BASE_URL . 'respuesta_payu.php">
+                        <input name="confirmationUrl" type="hidden" value="' . BASE_URL . 'webhook_payu.php">
+                    </form>
+                  </body>';
+            exit();
+            break;
+        
+        default:
+            throw new Exception("Por favor, selecciona un método de pago.");
     }
 
-    // --- GUARDAR EN BASE DE DATOS ---
+    // --- 6. GUARDAR PEDIDO (SOLO PARA STRIPE Y MANUAL) ---
+    // Mercado Pago ya guardó su pedido y redirigió, por lo que no llegará a esta parte.
     $pdo->beginTransaction();
-    
-    // Convertimos los montos finales a la moneda del cliente para guardarlos
-    $total_final_cliente = $total_final_usd * $moneda_seleccionada['tasa_conversion'];
-    $iva_total_cliente = $iva_total_usd * $moneda_seleccionada['tasa_conversion'];
-
-    $sql_pedido = "INSERT INTO pedidos (usuario_id, direccion_envio, total, iva_total, estado, metodo_pago, moneda_pedido, tasa_conversion_pedido, cupon_usado) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql_pedido = "INSERT INTO pedidos (usuario_id, direccion_envio, total, estado, metodo_pago) VALUES (?, ?, ?, ?, ?)";
     $stmt_pedido = $pdo->prepare($sql_pedido);
-    $stmt_pedido->execute([$usuario_id, $direccion_envio, $total_final_cliente, $iva_total_cliente, $estado_pedido, $metodo_pago, $moneda_seleccionada['codigo'], $moneda_seleccionada['tasa_conversion'], $codigo_cupon_usado]);
+    $stmt_pedido->execute([$usuario_id, $direccion_envio, $total_final_usd, $estado_pedido, $metodo_pago]);
     $pedido_id = $pdo->lastInsertId();
-
-
-    // --- NUEVO: Crear la conversación para este pedido (versión multi-admin) ---
+    
     $sql_conversacion = "INSERT INTO conversaciones (pedido_id, cliente_id) VALUES (?, ?)";
     $stmt_conversacion = $pdo->prepare($sql_conversacion);
     $stmt_conversacion->execute([$pedido_id, $usuario_id]);
-    // --- FIN DEL CÓDIGO NUEVO ---
-
 
     $sql_detalle = "INSERT INTO pedido_detalles (pedido_id, producto_id, cantidad, precio_unitario) VALUES (?, ?, ?, ?)";
     $stmt_detalle = $pdo->prepare($sql_detalle);
@@ -129,7 +153,7 @@ try {
         $stmt_cupon = $pdo->prepare("UPDATE cupones SET usos_actuales = usos_actuales + 1 WHERE id = ?");
         $stmt_cupon->execute([$cupon_aplicado['id']]);
     }
-    
+
     // --- GENERAR NOTIFICACIONES ---
     $admins_ids = obtener_admins($pdo);
     $mensaje_admin = "Nuevo pedido #" . $pedido_id . " recibido.";
@@ -142,15 +166,12 @@ try {
 
     $pdo->commit();
 
-    // Limpiar sesión y redirigir
     unset($_SESSION['carrito'], $_SESSION['cupon']);
     header("Location: " . BASE_URL . "gracias.php?pedido_id=" . $pedido_id);
     exit();
 
 } catch (Exception $e) {
-    if ($pdo->inTransaction()) {
-        $pdo->rollBack();
-    }
+    if ($pdo->inTransaction()) $pdo->rollBack();
     $_SESSION['mensaje_carrito'] = "Error al procesar tu pedido: " . $e->getMessage();
     header('Location: ' . BASE_URL . 'checkout.php');
     exit();
