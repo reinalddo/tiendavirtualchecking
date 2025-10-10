@@ -1,7 +1,6 @@
 <?php
 // includes/header.php
 require_once 'config.php'; // Incluimos nuestra nueva configuración
-require_once 'db_connection.php'; 
 
 // Iniciar la sesión solo si no hay una activa
 if (session_status() === PHP_SESSION_NONE) {
@@ -13,32 +12,55 @@ if (session_status() === PHP_SESSION_NONE) {
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <base href="<?php echo ABSOLUTE_URL; ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title><?php echo $meta_title ?? 'Mi Tienda Web'; ?></title>
     
-    <link rel="icon" href="<?php echo BASE_URL; ?>favicon.png" type="image/x-icon">
-    
+    <?php
+    // Primero, definimos la ruta del favicon por defecto
+    $favicon_path = BASE_URL . 'favicon.png';
+    $favicon_type = 'image/x-icon';
+
+    // Luego, verificamos si hay un logo personalizado configurado en el sitio
+    if (!empty($config['tienda_logo'])) {
+        $ruta_logo_personalizado = 'uploads/' . $config['tienda_logo'];
+        
+        // Y comprobamos que el archivo de ese logo realmente exista en el servidor
+        if (file_exists($_SERVER['DOCUMENT_ROOT'] . BASE_URL . $ruta_logo_personalizado)) {
+            $favicon_path = BASE_URL . $ruta_logo_personalizado;
+            // Obtenemos el tipo de imagen para el atributo 'type'
+            $info = getimagesize($_SERVER['DOCUMENT_ROOT'] . BASE_URL . $ruta_logo_personalizado);
+            if ($info) {
+                $favicon_type = $info['mime'];
+            }
+        }
+    }
+    ?>
+    <link rel="icon" href="<?php echo $favicon_path; ?>" type="<?php echo $favicon_type; ?>">
+
     <meta name="description" content="<?php echo $meta_description ?? 'Descubre nuestra selección de productos únicos y de alta calidad.'; ?>">
     
     <meta property="og:type" content="website">
-    <meta property="og:url" content="<?php echo 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']; ?>">
-    <meta property="og:title" content="<?php echo $meta_title ?? 'Mi Tienda Web - Productos Increíbles'; ?>">
-    <meta property="og:description" content="<?php echo $meta_description ?? 'Descubre nuestra selección de productos únicos y de alta calidad.'; ?>">
-    <meta property="og:image" content="<?php echo $meta_image ?? BASE_URL . 'imgredes/tienda_preview.png'; ?>">
+    <meta property="og:title" content="<?php echo $meta_title ?? htmlspecialchars($config['tienda_nombre'] ?? 'Mi Tienda Web'); ?>">
+    <meta property="og:description" content="<?php echo $meta_description ?? htmlspecialchars($config['tienda_descripcion_corta'] ?? ''); ?>">
+    <meta property="og:url" content="<?php echo ABSOLUTE_URL . ltrim($_SERVER['REQUEST_URI'], '/'); ?>">
+    <meta property="og:image" content="<?php echo $meta_image ?? ABSOLUTE_URL . 'imgredes/tienda_preview.png'; ?>">
 
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="<?php echo 'http://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']; ?>">
-    <meta property="twitter:title" content="<?php echo $meta_title ?? 'Mi Tienda Web - Productos Increíbles'; ?>">
-    <meta property="twitter:description" content="<?php echo $meta_description ?? 'Descubre nuestra selección de productos únicos y de alta calidad.'; ?>">
-    <meta property="twitter:image" content="<?php echo $meta_image ?? BASE_URL . 'imgredes/tienda_preview.png.jpg'; ?>">
+    <meta property="twitter:title" content="<?php echo $meta_title ?? htmlspecialchars($config['tienda_nombre'] ?? 'Mi Tienda Web'); ?>">
+    <meta property="twitter:description" content="<?php echo $meta_description ?? htmlspecialchars($config['tienda_descripcion_corta'] ?? ''); ?>">
+    <meta property="twitter:url" content="<?php echo ABSOLUTE_URL . ltrim($_SERVER['REQUEST_URI'], '/'); ?>">
+    <meta property="twitter:image" content="<?php echo $meta_image ?? ABSOLUTE_URL . 'imgredes/tienda_preview.png'; ?>">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>css/style.css">
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>css/header-style.css">
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>css/chat-style.css">
-    <link rel="stylesheet" href="<?php echo BASE_URL; ?>css/product-card-style.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/header-style.css">
+    <link rel="stylesheet" href="css/chat-style.css">
+    <link rel="stylesheet" href="css/product-card-style.css">
+    <link rel="stylesheet" href="css/gallery-detail.css">
+    <link rel="stylesheet" href="css/product-detail-style.css">
 
 
     <script>const BASE_URL = '<?php echo BASE_URL; ?>';</script>
@@ -50,12 +72,20 @@ if (session_status() === PHP_SESSION_NONE) {
 <header class="sticky-top">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="<?php echo BASE_URL; ?>index.php">Mi Tienda</a>
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+            <?php
+            $logo_header_path = !empty($config['tienda_logo']) ? 'uploads/' . $config['tienda_logo'] : null;
+            if ($logo_header_path && file_exists($_SERVER['DOCUMENT_ROOT'] . BASE_URL . $logo_header_path)):
+            ?>
+                <img src="<?php echo BASE_URL . $logo_header_path; ?>" alt="<?php echo htmlspecialchars($config['tienda_nombre'] ?? 'Mi Tienda'); ?> Logo" style="height: 30px; margin-right: 10px;">
+            <?php endif; ?>
+            <?php echo htmlspecialchars($config['tienda_nombre'] ?? 'Mi Tienda'); ?>
+        </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#main-nav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="main-nav">
-                <form class="d-flex mx-auto" action="<?php echo BASE_URL; ?>buscar.php" method="GET">
+                <form class="d-flex mx-auto" action="buscar" method="GET" id="search-form">
                     <input class="form-control me-2" id="search-input" type="search" name="q" placeholder="Buscar productos..." required autocomplete='off'>
                     <button class="btn btn-outline-success" type="submit">Buscar</button>
                 </form>
@@ -63,7 +93,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center">
                     <li class="nav-item me-2">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>productos.php">Productos</a>
+                        <a class="nav-link" href="productos">Productos</a>
                     </li>
 
                     <li class="nav-item dropdown me-2">
@@ -75,7 +105,7 @@ if (session_status() === PHP_SESSION_NONE) {
                                 <?php
                                 // Obtenemos solo categorías activas y con productos
                                 $stmt_cats = $pdo->query("
-                                    SELECT c.id, c.nombre FROM categorias c
+                                    SELECT c.id, c.nombre, c.slug FROM categorias c
                                     JOIN producto_categorias pc ON c.id = pc.categoria_id
                                     GROUP BY c.id HAVING COUNT(pc.producto_id) > 0
                                     ORDER BY c.nombre ASC
@@ -90,7 +120,7 @@ if (session_status() === PHP_SESSION_NONE) {
                                 ?>
                                     <div class="col-md-4">
                                         <?php foreach ($columna as $categoria): ?>
-                                            <a class="dropdown-item" href="<?php echo BASE_URL; ?>productos.php?categoria=<?php echo $categoria['id']; ?>">
+                                            <a class="dropdown-item" href="categoria/<?php echo htmlspecialchars($categoria['slug']); ?>">
                                                 <?php echo htmlspecialchars($categoria['nombre']); ?>
                                             </a>
                                         <?php endforeach; ?>
@@ -101,7 +131,7 @@ if (session_status() === PHP_SESSION_NONE) {
                     </li>
 
                     <li class="nav-item">
-                        <a class="nav-link" href="<?php echo BASE_URL; ?>contacto.php">Contacto</a>
+                        <a class="nav-link" href="contacto">Contacto</a>
                     </li>
                     
                     <?php
@@ -122,29 +152,29 @@ if (session_status() === PHP_SESSION_NONE) {
                     <?php if (isset($_SESSION['usuario_id'])): ?>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                <img src="<?php echo htmlspecialchars($_SESSION['usuario_avatar']); ?>" alt="Avatar" class="nav-avatar me-2">
+                                <img src="<?php echo htmlspecialchars($_SESSION['usuario_avatar'] ?? ''); ?>" alt="Avatar" class="nav-avatar me-2">
                                 <?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>editar_perfil.php">Mi Perfil</a></li> 
-                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>perfil.php">Mis Pedidos</a></li>
-                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>wishlist.php">Mi Lista de Deseados</a></li>
+                                <li><a class="dropdown-item" href="editar-perfil">Mi Perfil</a></li> 
+                                <li><a class="dropdown-item" href="perfil">Mis Pedidos</a></li>
+                                <li><a class="dropdown-item" href="wishlist">Mi Lista de Deseados</a></li>
                                 <?php if ($_SESSION['usuario_rol'] === 'admin'): ?>
                                     <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>admin/panel_admin.php">Panel Admin</a></li>
+                                    <li><a class="dropdown-item" href="panel">Panel Admin</a></li>
                                 <?php endif; ?>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?php echo BASE_URL; ?>logout.php">Cerrar Sesión</a></li>
+                                <li><a class="dropdown-item" href="logout">Cerrar Sesión</a></li>
                             </ul>
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
-                            <a class="nav-link" href="<?php echo BASE_URL; ?>login.php">Login/Registro</a>
+                            <a class="nav-link" href="login">Login/Registro</a>
                         </li>
                     <?php endif; ?>
 
                     <li class="nav-item">
-                        <form action="<?php echo BASE_URL; ?>cambiar_moneda.php" method="POST" class="d-flex">
+                        <form action="cambiar_moneda" method="POST" class="d-flex" style="margin-bottom: 0 !important;">
                             <select name="moneda_id" onchange="this.form.submit()" class="form-select form-select-sm">
                                 <?php
                                 $stmt_monedas = $pdo->query("SELECT * FROM monedas WHERE es_activa = 1");
@@ -156,6 +186,7 @@ if (session_status() === PHP_SESSION_NONE) {
                             </select>
                         </form>
                     </li>
+                    <?php if (isset($_SESSION['usuario_id'])): ?>
                     <li class="nav-item dropdown">
                         <a class="nav-link" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-bell-fill fs-4"></i>
@@ -165,6 +196,7 @@ if (session_status() === PHP_SESSION_NONE) {
                             <div class="text-center text-muted p-3">Cargando...</div>
                         </div>
                     </li>
+                    <?php endif; ?>
 
                 </ul>
             </div>

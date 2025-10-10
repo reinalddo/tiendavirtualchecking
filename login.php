@@ -1,7 +1,7 @@
 <?php
 // login.php
 require_once 'includes/config.php';
-require_once 'includes/db_connection.php';
+//require_once 'includes/db_connection.php';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -16,7 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($usuario && password_verify($password, $usuario['password'])) {
-            session_start();
+            //session_start();
+            session_regenerate_id(true);
 
             $avatar_final = '';
             if (!empty($usuario['avatar_url'])) {
@@ -35,10 +36,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['usuario_rol'] = $usuario['rol'];
             $_SESSION['usuario_avatar'] = $avatar_final; 
 
+            // --- INICIO DE LA LÓGICA "RECORDARME" ---
+            if (isset($_POST['remember_me'])) {
+                // 1. Generar tokens seguros
+                $selector = bin2hex(random_bytes(12));
+                $validator = bin2hex(random_bytes(32));
+                
+                // 2. Guardar el token en una cookie (selector y validador en texto plano)
+                $cookie_value = $selector . ':' . $validator;
+                setcookie('remember_me', $cookie_value, time() + (86400 * 30), "/", "", false, true); // Cookie de 30 días
+
+                // 3. Guardar en la BD (selector y validador HASHEADO)
+                $hashed_validator = hash('sha256', $validator);
+                $user_id = $usuario['id'];
+                $expires_at = date('Y-m-d H:i:s', time() + (86400 * 30));
+                
+                $stmt_token = $pdo->prepare("INSERT INTO auth_tokens (selector, hashed_validator, user_id, expires_at) VALUES (?, ?, ?, ?)");
+                $stmt_token->execute([$selector, $hashed_validator, $user_id, $expires_at]);
+            }
+            // --- FIN DE LA LÓGICA "RECORDARME" ---
+
+
             if ($usuario['rol'] === 'admin') {
-                header("Location: admin/panel_admin.php");
+                header("Location: " . BASE_URL . "panel");
             } else {
-                header("Location: perfil.php");
+                header("Location: " . BASE_URL . "perfil");
             }
             exit();
         } else {
@@ -58,8 +80,13 @@ require_once 'includes/header.php';
                 <div class="card shadow-sm">
                     <div class="card-body p-4">
                         <h2 class="card-title text-center mb-4">Iniciar Sesión</h2>
+                        <?php if (!empty($error)): ?>
+                            <div class="alert alert-danger" role="alert">
+                                <?php echo htmlspecialchars($error); ?>
+                            </div>
+                        <?php endif; ?>
 
-                        <form action="login.php" method="POST">
+                        <form action="login" method="POST">
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email:</label>
                                 <input type="email" id="email" name="email" class="form-control" required>
@@ -68,6 +95,10 @@ require_once 'includes/header.php';
                                 <label for="password" class="form-label">Contraseña:</label>
                                 <input type="password" id="password" name="password" class="form-control" required>
                             </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="remember_me" name="remember_me" value="1">
+                                <label class="form-check-label" for="remember_me">Recordarme en este equipo</label>
+                            </div>
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
                             </div>
@@ -75,12 +106,12 @@ require_once 'includes/header.php';
                         
                         <hr class="my-4">
 
-                        <a href="google-login.php" id="googleLoginBtn" class="btn btn-danger w-100 mb-3">
+                        <a href="google-login" id="googleLoginBtn" class="btn btn-danger w-100 mb-3">
                             Iniciar Sesión con Google
                         </a>
                         
                         <div class="text-center">
-                            <p>¿No tienes una cuenta? <a href="registro.php">Regístrate aquí</a>.</p>
+                            <p>¿No tienes una cuenta? <a href="registro">Regístrate aquí</a>.</p>
                         </div>
                     </div>
                 </div>

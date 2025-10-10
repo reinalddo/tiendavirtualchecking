@@ -1,13 +1,7 @@
 <?php
 // admin/ver_pedidos.php
-require_once '../includes/db_connection.php';
 require_once '../includes/config.php';
-
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit();
-}
+verificar_sesion_admin();
 
 
 // Obtener todos los pedidos, uniendo con la tabla de usuarios para obtener el nombre del cliente
@@ -19,8 +13,9 @@ $sql = "SELECT p.*, u.nombre_pila as nombre_cliente, cp.url_comprobante,
         ";
 $params = [];
 $titulo = "Ver Todos los Pedidos";
-
+$url_ver_detalles1 = "panel/";
 if (!empty($_GET['cliente_id'])) {
+    $url_ver_detalles1 = "panel/pedidos/cliente/".$_GET['cliente_id']."/";
     $sql .= " WHERE p.usuario_id = ?";
     $params[] = (int)$_GET['cliente_id'];
     $stmt_cliente = $pdo->prepare("SELECT nombre_pila, apellido FROM usuarios WHERE id = ?");
@@ -74,7 +69,7 @@ require_once '../includes/header.php';
                                         <td><strong>#<?php echo htmlspecialchars($pedido['id']); ?></strong></td>
                                         <td><?php echo htmlspecialchars($pedido['nombre_cliente']); ?></td>
                                         <td><?php echo htmlspecialchars($pedido['fecha_pedido']); ?></td>
-                                        <td><?php echo htmlspecialchars($pedido['moneda_pedido'] . ' ' . number_format($pedido['total'], 2)); ?></td>
+                                        <td><?php echo htmlspecialchars($pedido['moneda_pedido'] . ' ' . number_format($pedido['total'] * $pedido['tasa_conversion_pedido'], 2)); ?></td>
                                         <td>
                                             <span class="badge <?php echo $status_class; ?>">
                                                 <?php echo htmlspecialchars($pedido['estado'] ?? ''); ?>
@@ -86,7 +81,7 @@ require_once '../includes/header.php';
                                             <?php endif; ?>
                                         </td>
                                         <td class="text-end">
-                                            <a href="detalle_pedido.php?id=<?php echo $pedido['id']; ?>" class="btn btn-sm btn-secondary">Ver Detalles</a>
+                                            <a href="<?php echo $url_ver_detalles1; ?>pedido/<?php echo $pedido['id']; ?>" class="btn btn-sm btn-secondary">Ver Detalles</a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

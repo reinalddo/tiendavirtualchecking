@@ -28,7 +28,7 @@ $stmt_pedido->execute([$pedido_id, $usuario_id, $_SESSION['usuario_rol'] ?? ''])
 $pedido = $stmt_pedido->fetch(PDO::FETCH_ASSOC);
 
 if (!$pedido) {
-    die('Pedido no encontrado o no tienes permiso para verlo.');
+    die('No tienes Permisos para ver esta factura ya que pertenece a otro cliente.');
 }
 
 // 3. OBTENER DETALLES DEL PEDIDO
@@ -40,7 +40,6 @@ $detalles = $stmt_detalles->fetchAll(PDO::FETCH_ASSOC);
 
 
 // --- CÁLCULOS CORREGIDOS PARA LA FACTURA ---
-$total_final = $pedido['total'];
 $iva_porcentaje = $tienda_info['iva_porcentaje'];
 
 // 1. Calculamos el subtotal bruto (suma de productos ANTES de descuentos)
@@ -68,8 +67,11 @@ if (!empty($pedido['cupon_usado'])) {
 // 3. Recalculamos los otros valores para que cuadren en la factura
 // Esto funciona para la lógica antigua de IVA exclusivo que se usó en el pedido #27
 $base_imponible = $subtotal_bruto - $monto_descuento;
+$total_final = $base_imponible;
 $monto_iva = $base_imponible * ($iva_porcentaje / 100);
 $base_imponible -= $monto_iva;
+
+
 
 // 5. CREACIÓN DEL PDF CON TCPDF
 $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
@@ -83,9 +85,13 @@ $pdf->AddPage();
 
 // 6. CONSTRUCCIÓN DEL HTML PARA EL PDF
 $logo_html = '';
-if (!empty($tienda_info['tienda_logo']) && file_exists(__DIR__ . '/uploads/' . $tienda_info['tienda_logo'])) {
+if (!empty($tienda_info['tienda_logo'])) {
     $logo_path = __DIR__ . '/uploads/' . $tienda_info['tienda_logo'];
-    $logo_html = '<img src="' . $logo_path . '" height="50">';
+    
+    // Dejamos únicamente la comprobación de que el archivo exista
+    if (file_exists($logo_path)) {
+        $logo_html = '<img src="' . $logo_path . '" height="50">';
+    }
 }
 
 $html = '
@@ -184,7 +190,7 @@ $html .= '  <tr>
     </tr>
 </table>';
 
-$pdf->writeHTML($html, true, false, true, false, '');
+@$pdf->writeHTML($html, true, false, true, false, '');
 $pdf->Output('factura_pedido_' . $pedido_id . '.pdf', 'I');
 exit();
 ?>

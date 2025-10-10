@@ -1,14 +1,7 @@
 <?php
 // admin/gestionar_monedas.php
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
-//session_start();
-
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit();
-}
+verificar_sesion_admin();
 
 // --- LÓGICA DE ACCIONES ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -36,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['mensaje_carrito'] = 'Error: No se puede eliminar la moneda base (USD).';
         }
     }
-    header("Location: gestionar_monedas.php");
+    header("Location: " . BASE_URL . "panel/gestionar-monedas");
     exit();
 }
 
@@ -53,7 +46,7 @@ require_once '../includes/header.php';
                 <div class="card shadow-sm">
                     <div class="card-header"><h5 class="my-0 fw-normal">Añadir Nueva Moneda</h5></div>
                     <div class="card-body">
-                        <form action="gestionar_monedas.php" method="POST">
+                        <form action="panel/gestionar-monedas" method="POST">
                             <div class="mb-3">
                                 <label for="nombre" class="form-label">Nombre:</label>
                                 <input type="text" id="nombre" name="nombre" class="form-control" required placeholder="Ej: Euro">
@@ -111,7 +104,7 @@ require_once '../includes/header.php';
                                         </td>
                                         <td class="text-end">
                                             <?php if ($moneda['id'] != 1): // No se puede eliminar USD ?>
-                                            <form action="gestionar_monedas.php" method="POST" class="d-inline">
+                                            <form action="panel/gestionar-monedas" method="POST" class="d-inline">
                                                 <input type="hidden" name="moneda_id" value="<?php echo $moneda['id']; ?>">
                                                 <button type="submit" name="delete_moneda" class="btn btn-sm btn-danger confirm-delete">Eliminar</button>
                                             </form>

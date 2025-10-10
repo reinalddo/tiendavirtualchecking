@@ -1,8 +1,7 @@
 <?php
 // admin/ajax_delete_gallery_item.php
-session_start();
-require_once '../includes/db_connection.php';
-// ... (Verificación de seguridad de admin) ...
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 $gallery_id = $_POST['gallery_id'] ?? 0;
 

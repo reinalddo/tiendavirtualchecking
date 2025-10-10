@@ -1,13 +1,7 @@
 <?php
 // admin/gestionar_mensajes.php (Versión Corregida)
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
-
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit();
-}
+verificar_sesion_admin();
 
 // Consulta corregida para manejar conversaciones vacías
 $sql = "SELECT 
@@ -41,7 +35,7 @@ require_once '../includes/header.php';
                         <div class="list-group-item">No hay conversaciones activas.</div>
                     <?php else: ?>
                         <?php foreach ($conversaciones as $conv): ?>
-                            <a href="ver_conversacion.php?id=<?php echo $conv['conversacion_id']; ?>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center <?php echo ($conv['no_leidos'] > 0) ? 'list-group-item-primary' : ''; ?>">
+                            <a href="panel/conversacion/<?php echo $conv['conversacion_id']; ?>" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center <?php echo ($conv['no_leidos'] > 0) ? 'list-group-item-primary' : ''; ?>">
                                 <div>
                                     <h6 class="mb-1">
                                         Pedido #<?php echo htmlspecialchars($conv['pedido_id']); ?> - 

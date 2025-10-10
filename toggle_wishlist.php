@@ -1,7 +1,6 @@
 <?php
 // toggle_wishlist.php
-session_start();
-require_once 'includes/db_connection.php';
+require_once 'includes/config.php';
 
 // Verificaciones de seguridad
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id']) || empty($_POST['producto_id'])) {

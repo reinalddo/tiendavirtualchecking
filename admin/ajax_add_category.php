@@ -1,7 +1,7 @@
 <?php
 // admin/ajax_add_category.php
-session_start();
-require_once '../includes/db_connection.php';
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 // Verificación de seguridad y de que se envió un nombre
 if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin' || empty($_POST['nombre'])) {

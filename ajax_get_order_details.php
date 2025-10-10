@@ -1,8 +1,8 @@
 <?php
 // ajax_get_order_details.php
-session_start();
+//session_start();
 require_once 'includes/config.php';
-require_once 'includes/db_connection.php';
+//require_once 'includes/db_connection.php';
 require_once 'includes/helpers.php';
 
 if (!isset($_SESSION['usuario_id']) || empty($_GET['pedido_id'])) {
@@ -14,10 +14,15 @@ $pedido_id = $_GET['pedido_id'];
 $usuario_id = $_SESSION['usuario_id'];
 
 // Obtener la moneda del pedido principal
-$stmt_pedido = $pdo->prepare("SELECT moneda_pedido FROM pedidos WHERE id = ? AND usuario_id = ?");
+$stmt_pedido = $pdo->prepare("SELECT moneda_pedido, tasa_conversion_pedido, total FROM pedidos WHERE id = ? AND usuario_id = ?");
 $stmt_pedido->execute([$pedido_id, $usuario_id]);
 $pedido = $stmt_pedido->fetch(PDO::FETCH_ASSOC);
 $moneda_del_pedido = $pedido['moneda_pedido'] ?? 'USD';
+
+if (!$pedido) {
+    echo "<p>No se encontraron detalles para este pedido.</p>";
+    exit();
+}
 
 // Obtener los detalles y la imagen principal de cada producto
 $stmt_detalles = $pdo->prepare("SELECT pd.*, p.nombre as nombre_producto, 
@@ -47,13 +52,14 @@ foreach ($detalles as $item) {
     $html .= '<td>' . $imagen_html . '</td>';
     $html .= '<td>' . htmlspecialchars($item['nombre_producto']) . '</td>';
     $html .= '<td>' . $item['cantidad'] . '</td>';
-    $html .= '<td>' . format_price($item['precio_unitario']) . '</td>';
-    $html .= '<td>' . format_price($subtotal) . '</td>';
+    $html .= '<td>' . format_historical_price($item['precio_unitario'], $pedido, $pdo) . '</td>';
+    $html .= '<td>' . format_historical_price($subtotal, $pedido, $pdo) . '</td>';
     $html .= '</tr>';
 }
 $html .= '</tbody></table>';
 // Mostramos el total recién calculado
-$html .= '<h4 style="text-align:right; margin-top:15px;">Total del Pedido: ' . $moneda_del_pedido . ' ' . number_format($total_calculado, 2) . '</h4>';
+//$html .= '<h4 style="text-align:right; margin-top:15px;">Total del Pedido: ' . $moneda_del_pedido . ' ' . number_format($total_calculado, 2) . '</h4>';
+$html .= '<h4 style="text-align:right; margin-top:15px;">Total del Pedido: ' . format_historical_price($pedido['total'], $pedido, $pdo) . '</h4>';
 
 echo $html;
 ?>

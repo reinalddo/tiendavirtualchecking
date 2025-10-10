@@ -1,2 +1,3 @@
 *.txt
 crear_hash.php
+includes/db_connection.php

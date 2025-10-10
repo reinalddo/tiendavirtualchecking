@@ -1,7 +1,7 @@
 <?php
 // ajax_buscar_productos.php (Versión Corregida y Definitiva)
 require_once 'includes/config.php';
-require_once 'includes/db_connection.php';
+//require_once 'includes/db_connection.php';
 
 header('Content-Type: application/json');
 
@@ -16,7 +16,7 @@ if (strlen($term) >= 3) {
 
     // 2. Consulta SQL corregida y más estándar
     $sql = "SELECT
-                p.id, p.nombre, p.descripcion_html,
+                p.id, p.nombre, p.slug, p.descripcion_html,
                 (SELECT gal.url FROM producto_galeria gal WHERE gal.producto_id = p.id AND gal.tipo = 'imagen' ORDER BY gal.orden ASC, gal.id ASC LIMIT 1) as imagen_principal,
                 (MATCH(p.nombre) AGAINST(:termino IN BOOLEAN MODE) * 5) as relevancia_nombre,
                 (MATCH(p.descripcion_html) AGAINST(:termino IN BOOLEAN MODE)) as relevancia_desc
@@ -49,7 +49,7 @@ if (strlen($term) >= 3) {
             'nombre' => htmlspecialchars($producto['nombre']),
             'descripcion' => htmlspecialchars($descripcion_corta),
             'imagen_url' => BASE_URL . 'uploads/' . htmlspecialchars($producto['imagen_principal'] ?? 'placeholder.png'),
-            'url_producto' => BASE_URL . 'producto_detalle.php?id=' . $producto['id'], 
+            'url_producto' => BASE_URL . 'producto/' . htmlspecialchars($producto['slug']), 
             'sql' => $sql2
         ];
     }

@@ -73,7 +73,7 @@ if ($cupon_aplicado) {
                                     <td><?php echo $producto['cantidad']; ?></td>
                                     <td class="text-end"><?php echo format_price($producto['subtotal_usd']); ?></td>
                                     <td class="text-end">
-                                        <form action="carrito_acciones.php" method="POST">
+                                        <form action="carrito-acciones" method="POST">
                                             <input type="hidden" name="producto_id" value="<?php echo $producto['id']; ?>">
                                             <button type="submit" name="eliminar_del_carrito" class="btn btn-sm btn-outline-danger">&times;</button>
                                         </form>
@@ -95,7 +95,7 @@ if ($cupon_aplicado) {
                                     Cupón "<strong><?php echo htmlspecialchars($_SESSION['cupon']['codigo']); ?></strong>" aplicado.
                                     </div>
                             <?php else: ?>
-                                <form action="aplicar_cupon.php" method="POST" class="d-flex mb-3">
+                                <form action="carrito/aplicar-cupon" method="POST" class="d-flex mb-3">
                                     <input type="text" name="codigo_cupon" class="form-control me-2" placeholder="Código de Cupón">
                                     <button type="submit" class="btn btn-secondary">Aplicar</button>
                                 </form>
@@ -118,7 +118,7 @@ if ($cupon_aplicado) {
                             </li>
                         </ul>
                         <div class="d-grid mt-3">
-                            <a href="checkout.php" class="btn btn-primary">Proceder al Pago</a>
+                            <a href="checkout" class="btn btn-primary">Proceder al Pago</a>
                         </div>
                     </div>
                 </div>

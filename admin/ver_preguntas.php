@@ -1,13 +1,7 @@
 <?php
 // admin/ver_preguntas.php
-require_once '../includes/header.php';
-require_once '../includes/db_connection.php';
-
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: /login.php');
-    exit();
-}
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 // Obtener todas las preguntas
 $stmt = $pdo->query("SELECT pr.*, p.nombre as nombre_producto, u.nombre_pila as nombre_usuario, p.sku
@@ -49,7 +43,7 @@ $preguntas = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td><?php echo htmlspecialchars($pregunta['fecha_pregunta']); ?></td>
                                 <td class="text-end">
                                     <?php if (empty($pregunta['respuesta'])): ?>
-                                        <a href="responder_pregunta.php?id=<?php echo $pregunta['id']; ?>" class="btn btn-sm btn-primary">Responder</a>
+                                        <a href="panel/pregunta/responder/<?php echo $pregunta['id']; ?>" class="btn btn-sm btn-primary">Responder</a>
                                     <?php else: ?>
                                         <span class="badge bg-success">Respondida</span>
                                     <?php endif; ?>

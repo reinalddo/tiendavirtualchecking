@@ -62,7 +62,7 @@ require_once 'includes/header.php';
     <div class="checkout-layout">
         <div class="customer-info">
             <h2>Tus Datos y Pago</h2>
-                <form action="procesar_pedido.php" method="POST" id="payment-form">
+                <form action="procesar_pedido" method="POST" id="payment-form">
                     <div class="mb-3">
                         <label for="nombre" class="form-label">Nombre Completo:</label>
                         <input type="text" id="nombre" name="nombre" class="form-control" value="<?php echo htmlspecialchars($_SESSION['usuario_nombre']); ?>" required>

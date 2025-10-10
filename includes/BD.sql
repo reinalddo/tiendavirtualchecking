@@ -157,6 +157,22 @@ CREATE TABLE cupones (
     es_activo BOOLEAN NOT NULL DEFAULT 1
 );
 
+
+CREATE TABLE auth_tokens (
+    id INT(11) NOT NULL AUTO_INCREMENT,
+    selector CHAR(24) NOT NULL,
+    hashed_validator CHAR(64) NOT NULL,
+    user_id INT(11) NOT NULL,
+    expires_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY selector (selector),
+    KEY user_id (user_id),
+    CONSTRAINT auth_tokens_ibfk_1 
+        FOREIGN KEY (user_id) 
+        REFERENCES usuarios (id) 
+        ON DELETE CASCADE
+) ENGINE=MYISAM DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Insertamos el campo para el mapa principal del negocio
 INSERT INTO configuraciones (nombre_setting, valor_setting) 
 VALUES ('mapa_principal', 'Aquí pega el iframe de tu mapa principal');
@@ -341,3 +357,8 @@ MODIFY `codigo` VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT
 MODIFY `tipo_descuento` ENUM('porcentaje','fijo') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;
 
 
+ALTER TABLE `productos`
+ADD COLUMN `slug` VARCHAR(191) NULL UNIQUE AFTER `nombre`;
+
+ALTER TABLE `categorias`
+ADD COLUMN `slug` VARCHAR(191) NULL UNIQUE AFTER `nombre`;

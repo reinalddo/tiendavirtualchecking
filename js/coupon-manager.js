@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            fetch(BASE_URL + 'admin/ajax_update_cupon.php', {
+            fetch(BASE_URL + 'panel/ajax/update-cupon', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',

@@ -1,14 +1,6 @@
 <?php
-// admin/procesar_importacion.php
-session_start();
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
-
-// Verificación de seguridad de admin
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit();
-}
+verificar_sesion_admin();
 
 if (isset($_FILES['archivo_excel']) && $_FILES['archivo_excel']['error'] === UPLOAD_ERR_OK) {
     $archivo = $_FILES['archivo_excel']['tmp_name'];
@@ -22,11 +14,11 @@ if (isset($_FILES['archivo_excel']) && $_FILES['archivo_excel']['error'] === UPL
         $errores = [];
         $datos_validos = [];
         $monedas_disponibles = $pdo->query("SELECT codigo FROM monedas")->fetchAll(PDO::FETCH_COLUMN);
-
         // --- FASE 1: VALIDACIÓN ---
         foreach ($filas as $numero_fila => $fila) {
             $fila_actual = $numero_fila + 2;
             $sku = trim($fila[0] ?? '');
+            if (empty($sku)) { continue; }
             $nombre = trim($fila[1] ?? '');
             $precio = $fila[2] ?? '';
             $codigo_moneda = trim($fila[3] ?? '');
@@ -51,11 +43,13 @@ if (isset($_FILES['archivo_excel']) && $_FILES['archivo_excel']['error'] === UPL
                     'es_activo' => ($publicar == 'S') ? 1 : 0
                 ];
             }
+            //var_dump($datos_validos);die();
         }
 
         // --- FASE 2: DECISIÓN ---
         if (!empty($errores)) {
             $_SESSION['import_errors'] = $errores;
+            //var_dump($errores);die();
         } else {
             // --- FASE 3: IMPORTACIÓN ---
             $pdo->beginTransaction();
@@ -66,14 +60,15 @@ if (isset($_FILES['archivo_excel']) && $_FILES['archivo_excel']['error'] === UPL
                 $stmt_check = $pdo->prepare("SELECT id FROM productos WHERE sku = ?");
                 $stmt_check->execute([$data['sku']]);
                 $producto_existente = $stmt_check->fetch();
-
+                $producto_slug = generar_slug($data['nombre']); // Generamos el slug del producto
+                //echo $producto_slug;die();
                 if ($producto_existente) {
                     $producto_id = $producto_existente['id'];
-                    $sql = "UPDATE productos SET nombre = ?, precio_usd = ?, stock = ?, es_activo = ? WHERE id = ?";
-                    $pdo->prepare($sql)->execute([$data['nombre'], $data['precio_usd'], $data['stock'], $data['es_activo'], $producto_id]);
+                    $sql = "UPDATE productos SET nombre = ?, slug = ?, precio_usd = ?, stock = ?, es_activo = ? WHERE id = ?";
+                    $pdo->prepare($sql)->execute([$data['nombre'], $producto_slug, $data['precio_usd'], $data['stock'], $data['es_activo'], $producto_id]);
                 } else {
-                    $sql = "INSERT INTO productos (nombre, sku, precio_usd, stock, es_activo) VALUES (?, ?, ?, ?, ?)";
-                    $pdo->prepare($sql)->execute([$data['nombre'], $data['sku'], $data['precio_usd'], $data['stock'], $data['es_activo']]);
+                    $sql = "INSERT INTO productos (nombre, sku, slug, precio_usd, stock, es_activo) VALUES (?, ?, ?, ?, ?, ?)";
+                    $pdo->prepare($sql)->execute([$data['nombre'], $data['sku'], $producto_slug, $data['precio_usd'], $data['stock'], $data['es_activo']]);
                     $producto_id = $pdo->lastInsertId();
                 }
 
@@ -83,6 +78,7 @@ if (isset($_FILES['archivo_excel']) && $_FILES['archivo_excel']['error'] === UPL
                 $categoria_id = null;
                 // 1. Buscar o crear la categoría
                 if (!empty($data['clave_categoria'])) {
+                    $categoria_slug = generar_slug($data['nombre_categoria']); // Generamos el slug de la categoría
                     $stmt_cat = $pdo->prepare("SELECT id, nombre FROM categorias WHERE codigo = ?");
                     $stmt_cat->execute([$data['clave_categoria']]);
                     $cat_existente = $stmt_cat->fetch();
@@ -91,10 +87,10 @@ if (isset($_FILES['archivo_excel']) && $_FILES['archivo_excel']['error'] === UPL
                         $categoria_id = $cat_existente['id'];
                         // Si el nombre es diferente, lo actualizamos
                         if ($cat_existente['nombre'] !== $data['nombre_categoria']) {
-                            $pdo->prepare("UPDATE categorias SET nombre = ? WHERE id = ?")->execute([$data['nombre_categoria'], $categoria_id]);
+                            $pdo->prepare("UPDATE categorias SET nombre = ?, slug = ? WHERE id = ?")->execute([$data['nombre_categoria'], $categoria_slug, $categoria_id]);
                         }
                     } else {
-                        $pdo->prepare("INSERT INTO categorias (nombre, codigo) VALUES (?, ?)")->execute([$data['nombre_categoria'], $data['clave_categoria']]);
+                        $pdo->prepare("INSERT INTO categorias (nombre, codigo, slug) VALUES (?, ?, ?)")->execute([$data['nombre_categoria'], $data['clave_categoria'], $categoria_slug]);
                         $categoria_id = $pdo->lastInsertId();
                     }
                 }
@@ -115,13 +111,13 @@ if (isset($_FILES['archivo_excel']) && $_FILES['archivo_excel']['error'] === UPL
             $_SESSION['mensaje_carrito'] = '¡Importación completada exitosamente!';
         }
         
-        header('Location: ' . BASE_URL . 'admin/productos_masivos.php');
+        header('Location: ' . BASE_URL . 'panel/productos-masivos');
         exit();
 
     } catch (Exception $e) {
         if ($pdo->inTransaction()) { $pdo->rollBack(); }
         $_SESSION['import_errors'] = ['Error al procesar el archivo: ' . $e->getMessage()];
-        header('Location: ' . BASE_URL . 'admin/productos_masivos.php');
+        header('Location: ' . BASE_URL . 'panel/productos-masivos');
         exit();
     }
 }

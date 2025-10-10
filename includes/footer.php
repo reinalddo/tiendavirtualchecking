@@ -46,45 +46,82 @@
     <div class="container text-center text-md-start">
         <div class="row">
             <div class="col-md-4 mx-auto mb-4">
-                <h6 class="text-uppercase fw-bold footer-dw">Mi Tienda</h6>
+
+                <h6 class="text-uppercase fw-bold footer-dw d-flex align-items-center">
+                    <?php
+                    $logo_footer_path = !empty($config['tienda_logo']) ? 'uploads/' . $config['tienda_logo'] : null;
+                    if ($logo_footer_path && file_exists($_SERVER['DOCUMENT_ROOT'] . BASE_URL . $logo_footer_path)):
+                    ?>
+                        <img src="<?php echo BASE_URL . $logo_footer_path; ?>" alt="<?php echo htmlspecialchars($config['tienda_nombre'] ?? 'Mi Tienda'); ?> Logo" style="height: 40px; margin-right: 10px;">
+                    <?php endif; ?>
+                    <?php echo htmlspecialchars($config['tienda_nombre'] ?? 'Mi Tienda'); ?>
+                </h6>
+
                 <hr class="mb-4 mt-0 d-inline-block mx-auto" style="width: 60px; background-color: #7c4dff; height: 2px"/>
-                <p>
-                    Aquí puedes escribir una breve descripción de tu tienda, tu misión o los productos que ofreces.
-                </p>
+                <p><?php echo nl2br(htmlspecialchars($config['tienda_descripcion_corta'] ?? '')); ?></p>
             </div>
 
             <div class="col-md-2 mx-auto mb-4">
                 <h6 class="text-uppercase fw-bold footer-dw">Enlaces</h6>
                 <hr class="mb-4 mt-0 d-inline-block mx-auto" style="width: 60px; background-color: #7c4dff; height: 2px"/>
-                <p><a href="<?php echo BASE_URL; ?>index.php" class="text-white">Inicio</a></p>
-                <p><a href="<?php echo BASE_URL; ?>productos.php" class="text-white">Productos</a></p>
-                <p><a href="<?php echo BASE_URL; ?>contacto.php" class="text-white">Contacto</a></p>
+                <p><a href="/" class="text-white">Inicio</a></p>
+                <p><a href="productos" class="text-white">Productos</a></p>
+                <p><a href="contacto" class="text-white">Contacto</a></p>
             </div>
 
             <div class="col-md-4 mx-auto mb-4">
                 <h6 class="text-uppercase fw-bold footer-dw">Contacto</h6>
                 <hr class="mb-4 mt-0 d-inline-block mx-auto" style="width: 60px; background-color: #7c4dff; height: 2px"/>
-                <p><i class="bi bi-geo-alt-fill me-3"></i> San Cristóbal, Táchira</p>
-                <p><i class="bi bi-envelope-fill me-3"></i> info@mitienda.com</p>
+                <p><i class="bi bi-geo-alt-fill me-3"></i> <?php echo htmlspecialchars($config['tienda_domicilio_fiscal'] ?? ''); ?></p>
+                
+                <?php if (!empty($config['tienda_email_footer_activo']) && !empty($config['tienda_email_footer'])): ?>
+                    <p><i class="bi bi-envelope-fill me-3"></i> <?php echo htmlspecialchars($config['tienda_email_footer']); ?></p>
+                <?php endif; ?>
+
                 <div class="mt-3">
-                    <a href="#" class="text-white me-4"><i class="bi bi-facebook fs-4"></i></a>
-                    <a href="#" class="text-white me-4"><i class="bi bi-instagram fs-4"></i></a>
-                    <a href="#" class="text-white me-4"><i class="bi bi-twitter fs-4"></i></a>
+                    <?php
+                    $redes_sociales_footer = [
+                        'facebook' => ['icono' => 'bi-facebook'],
+                        'instagram' => ['icono' => 'bi-instagram'],
+                        'twitter' => ['icono' => 'bi-twitter-x'],
+                        'tiktok' => ['icono' => 'bi-tiktok'],
+                        'youtube' => ['icono' => 'bi-youtube']
+                    ];
+                    foreach ($redes_sociales_footer as $key => $red) {
+                        if (!empty($config[$key.'_activo']) && !empty($config[$key.'_url'])) {
+                            echo '<a href="' . htmlspecialchars($config[$key.'_url']) . '" target="_blank" class="text-white me-4"><i class="bi ' . $red['icono'] . ' fs-4"></i></a>';
+                        }
+                    }
+                    ?>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2)">
-        © <?php echo date('Y'); ?> Mi Tienda Web. Todos los derechos reservados.
+            © <?php echo date('Y'); ?> <?php echo htmlspecialchars($config['tienda_razon_social'] ?? 'Mi Tienda Web'); ?>. Todos los derechos reservados.
     </div>
+
+    <?php
+    // Mostramos el botón solo si es cliente, si está activo y si se ha introducido un número
+    if (!empty($config['whatsapp_activo']) && !empty($config['whatsapp_numero']) && $_SESSION['usuario_rol'] != 'admin'):
+        // Limpiamos el número para asegurar que solo contenga dígitos
+        $numero_whatsapp_limpio = preg_replace('/\D/', '', $config['whatsapp_numero']);
+        // Preparamos el mensaje para la URL, codificando los caracteres especiales
+        $mensaje_whatsapp_codificado = urlencode($config['whatsapp_mensaje'] ?? '¡Hola! Tengo una pregunta.');
+    ?>
+        <a href="https://wa.me/<?php echo $numero_whatsapp_limpio; ?>?text=<?php echo $mensaje_whatsapp_codificado; ?>" class="whatsapp-float" target="_blank">
+            <i class="bi bi-whatsapp"></i>
+        </a>
+    <?php endif; ?>
 </footer>
+
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="<?php echo BASE_URL; ?>js/cart-dropdown.js"></script>
-<script src="<?php echo BASE_URL; ?>js/main.js"></script>
-<script src="<?php echo BASE_URL; ?>js/notificaciones.js"></script>
-<script src="<?php echo BASE_URL; ?>js/live-search.js"></script>
+<script src="js/cart-dropdown.js"></script>
+<script src="js/main.js"></script>
+<script src="js/notificaciones.js"></script>
+<script src="js/live-search.js"></script>
 
 <div class="modal fade" id="mediaLibraryModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">

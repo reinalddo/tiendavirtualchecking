@@ -1,13 +1,7 @@
 <?php
 // admin/gestionar_galeria_inicio.php
-require_once '../includes/header.php';
-require_once '../includes/db_connection.php';
-
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: /login.php');
-    exit();
-}
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 $slides = $pdo->query("SELECT * FROM hero_gallery ORDER BY orden ASC")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -25,7 +19,7 @@ FROM productos p ORDER BY p.nombre ASC")->fetchAll(PDO::FETCH_ASSOC);
                 <div class="card shadow-sm">
                     <div class="card-header"><h5 class="my-0 fw-normal">Añadir Nuevo Slide</h5></div>
                     <div class="card-body">
-                        <form action="guardar_slide.php" method="POST" enctype="multipart/form-data">
+                        <form action="panel/galeria/guardar" method="POST" enctype="multipart/form-data">
                             <div class="mb-3">
                                 <label for="imagen" class="form-label">Imagen del Slide:</label>
                                 <input type="file" id="imagen" name="imagen" class="form-control" required>
@@ -81,7 +75,7 @@ FROM productos p ORDER BY p.nombre ASC")->fetchAll(PDO::FETCH_ASSOC);
                                         <td><input type="text" class="form-control update-field" name="enlace_url" value="<?php echo htmlspecialchars($slide['enlace_url']); ?>"></td>
                                         <td><input type="number" class="form-control update-field" name="orden" value="<?php echo htmlspecialchars($slide['orden']); ?>" style="width: 70px;"></td>
                                         <td class="text-end">
-                                            <a href="eliminar_slide.php?id=<?php echo $slide['id']; ?>" class="btn btn-sm btn-danger confirm-delete-ajax">Eliminar</a>
+                                            <a href="panel/galeria/eliminar/<?php echo $slide['id']; ?>" class="btn btn-sm btn-danger confirm-delete-ajax">Eliminar</a>
                                         </td>
                                     </tr>
                                     <?php endforeach; ?>

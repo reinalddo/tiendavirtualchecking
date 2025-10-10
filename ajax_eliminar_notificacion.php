@@ -1,7 +1,6 @@
 <?php
 // ajax_eliminar_notificacion.php
-session_start();
-require_once 'includes/db_connection.php';
+require_once 'includes/config.php'; // Usamos config.php que ya inicia la sesión y conecta a la BD
 
 if (!isset($_SESSION['usuario_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['id'])) {
     http_response_code(403);

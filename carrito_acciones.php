@@ -2,7 +2,7 @@
 // carrito_acciones.php
 //session_start();
 require_once 'includes/config.php';
-require_once 'includes/db_connection.php';
+//require_once 'includes/db_connection.php';
 
 // Inicializar el carrito si no existe
 if (!isset($_SESSION['carrito'])) {
@@ -50,14 +50,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (empty($_SESSION['carrito'])) {
             $_SESSION['moneda_carrito'] = null;
         }
-        header('Location: ' . BASE_URL . 'ver_carrito.php');
+        header('Location: ' . BASE_URL . 'carrito');
         exit();
     }
     if (isset($_POST['vaciar_carrito'])) {
         $_SESSION['carrito'] = [];
         $_SESSION['moneda_carrito'] = null;
         unset($_SESSION['cupon']);
-        header('Location: ' . BASE_URL . 'ver_carrito.php');
+        header('Location: ' . BASE_URL . 'carrito');
         exit();
     }
 }

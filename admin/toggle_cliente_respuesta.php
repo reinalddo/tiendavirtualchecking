@@ -1,8 +1,7 @@
 <?php
 // admin/toggle_cliente_respuesta.php
-session_start();
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
+verificar_sesion_admin();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
     exit('Acceso denegado');

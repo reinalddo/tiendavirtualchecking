@@ -1,14 +1,7 @@
 <?php
 // admin/eliminar_imagen_galeria.php
-session_start();
-require_once '../includes/db_connection.php';
 require_once '../includes/config.php';
-
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin' || !isset($_GET['id'])) {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit();
-}
+verificar_sesion_admin();
 
 $item_id = $_GET['id'];
 $producto_id = $_GET['producto_id']; // Para redirigir de vuelta

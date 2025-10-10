@@ -1,28 +1,47 @@
 <?php
 // mensajes_pedido.php (Versión Final Corregida)
 require_once 'includes/config.php';
-require_once 'includes/db_connection.php';
 
 // 1. Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || !isset($_GET['pedido_id'])) {
-    header('Location: ' . BASE_URL . 'login.php');
+if (!isset($_SESSION['usuario_id'])) {
+    header('Location: ' . BASE_URL . 'login');
     exit();
 }
 
-$pedido_id = (int)$_GET['pedido_id'];
+//$pedido_id = (int)$_GET['pedido_id'];
+
+$pedido_id = 0;
+// 3. Verificamos si llegamos desde una URL amigable o un parámetro GET
+if (isset($_GET['pedido_id'])) {
+    $pedido_id = (int)$_GET['pedido_id'];
+} else {
+    // Si la URL es amigable, extraemos el ID
+    $id_from_url = basename($_SERVER['REQUEST_URI']);
+    if (is_numeric($id_from_url)) {
+        $pedido_id = (int)$id_from_url;
+    }
+}
+
+// Si no tenemos un ID de pedido válido, redirigimos
+if ($pedido_id <= 0) {
+    header('Location: ' . BASE_URL . 'perfil');
+    exit();
+}
+
 $cliente_id = $_SESSION['usuario_id'];
 
-// 2. Obtener la conversación
-$stmt_conv = $pdo->prepare("SELECT * FROM conversaciones WHERE pedido_id = ? AND cliente_id = ?");
+// 4. Consulta SEGURA: Obtenemos la conversación SOLO SI el pedido pertenece al usuario en sesión
+$stmt_conv = $pdo->prepare("SELECT c.* FROM conversaciones c JOIN pedidos p ON c.pedido_id = p.id WHERE c.pedido_id = ? AND p.usuario_id = ?");
 $stmt_conv->execute([$pedido_id, $cliente_id]);
 $conversacion = $stmt_conv->fetch(PDO::FETCH_ASSOC);
 
+// 6. Si no se encontró la conversación, mostramos un mensaje de error amigable y detenemos el script
 if (!$conversacion) {
-    echo "<main><div class='container py-4'><div class='alert alert-danger'>Conversación no encontrada.</div></div></main>";
-    require_once 'includes/footer.php';
+    echo "<main><div class='container py-4'><div class='alert alert-danger'>No tienes permiso para ver esta conversación o no existe.</div><a href='perfil' class='btn btn-primary'>Volver a Mis Pedidos</a></div></main>";
+    //require_once 'includes/footer.php';
+    header('Location: ' . BASE_URL . 'perfil');
     exit();
 }
-
 // 3. Obtener todos los mensajes
 $stmt_msgs = $pdo->prepare("SELECT * FROM mensajes WHERE conversacion_id = ? ORDER BY fecha_envio DESC");
 $stmt_msgs->execute([$conversacion['id']]);
@@ -67,8 +86,9 @@ require_once 'includes/header.php';
             </div>
             <div class="card-footer">
                 <?php if ($conversacion['cliente_puede_responder']): ?>
-                    <form action="enviar_mensaje.php" method="POST" id="chat-form" enctype="multipart/form-data">
-                        <input type="hidden" name="conversacion_id" value="<?php echo $conversacion['id']; ?>"><input type="hidden" name="pedido_id" value="<?php echo $pedido_id; ?>">
+                    <form action="pedido/enviar-mensaje" method="POST" id="chat-form" enctype="multipart/form-data">
+                        <input type="hidden" name="conversacion_id" value="<?php echo $conversacion['id']; ?>">
+                        <input type="hidden" name="pedido_id" value="<?php echo $pedido_id; ?>">
                         <textarea name="mensaje" id="mensaje-textarea" class="form-control mb-2" placeholder="Escribe tu mensaje aquí..." rows="3"></textarea>
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -85,7 +105,7 @@ require_once 'includes/header.php';
                 <?php endif; ?>
             </div>
         </div>
-        <a href="perfil.php" class="btn btn-secondary mt-3">← Volver a Mis Pedidos</a>
+        <a href="perfil" class="btn btn-secondary mt-3">← Volver a Mis Pedidos</a>
     </div>
 </main>
 
@@ -120,11 +140,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     scrollToBottom();
 
+    let ultimoIdProcesado = <?php echo !empty($mensajes) ? $mensajes[0]['id'] : 0; ?>;
+
     function checkForNewMessages() {
         const ultimoMensaje = chatBox.lastElementChild;
         const ultimoId = ultimoMensaje ? ultimoMensaje.dataset.messageId : 0;
 
-        fetch(`${BASE_URL}ajax_get_nuevos_mensajes.php?conversacion_id=${conversacionId}&ultimo_id=${ultimoId}`)
+        fetch(`${BASE_URL}ajax/nuevos-mensajes?conversacion_id=${conversacionId}&ultimo_id=${ultimoIdProcesado}`)
         .then(response => response.json())
         .then(data => {
             if (data && data.length > 0) {
@@ -176,11 +198,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log("messageDiv.innerHTML = ", messageDiv.innerHTML);
                     
                     chatBox.prepend(messageDiv);
+                    ultimoIdProcesado = msg.id; 
                 });
                 // Le pedimos al navegador que haga el scroll en el próximo ciclo de renderizado.
-                window.requestAnimationFrame(() => {
+                //window.requestAnimationFrame(() => {
                     scrollToBottom();
-                });
+                //});
             }
         });
     }

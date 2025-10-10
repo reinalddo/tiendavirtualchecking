@@ -1,12 +1,15 @@
 <?php
 // subir_comprobante.php
-session_start();
+//session_start();
 require_once 'includes/config.php';
-require_once 'includes/db_connection.php';
-
+//require_once 'includes/db_connection.php';
 // Verificaciones
-if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id']) || empty($_POST['pedido_id']) || !isset($_FILES['comprobante'])) {
-    header('Location: ' . BASE_URL . 'index.php');
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' 
+    || !isset($_SESSION['usuario_id']) 
+    || empty($_POST['pedido_id'])) {
+    
+    // Si hay un acceso inválido, redirigimos al inicio
+    header('Location: ' . BASE_URL);
     exit();
 }
 
@@ -22,7 +25,7 @@ if ($stmt_check->fetchColumn() === false) {
 }
 
 // Procesar la subida del archivo
-if ($comprobante['error'] === UPLOAD_ERR_OK) {
+if (isset($_FILES['comprobante']) && $_FILES['comprobante']['error'] === UPLOAD_ERR_OK) {
     // Crear carpeta si no existe
     if (!is_dir('comprobantes')) {
         mkdir('comprobantes', 0755, true);
@@ -39,7 +42,7 @@ if ($comprobante['error'] === UPLOAD_ERR_OK) {
         // --- GENERAR NOTIFICACIONES ---
         $admins_ids = obtener_admins($pdo);
         $mensaje_admin = "El cliente ha subido un comprobante para el pedido #" . $pedido_id;
-        $url_admin = BASE_URL . "admin/detalle_pedido.php?id=" . $pedido_id;
+        $url_admin = BASE_URL . "panel/pedido/" . $pedido_id;
 
         foreach ($admins_ids as $admin_id) {
             crear_notificacion($pdo, $admin_id, $mensaje_admin, $url_admin);
@@ -54,6 +57,6 @@ if ($comprobante['error'] === UPLOAD_ERR_OK) {
     $_SESSION['mensaje_carrito'] = 'Error en la subida del archivo.';
 }
 
-header('Location: ' . BASE_URL . 'perfil.php');
+header('Location: ' . BASE_URL . 'perfil');
 exit();
 ?>

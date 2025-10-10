@@ -77,6 +77,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
     }
 
+    // --- LÓGICA PARA MOSTRAR/OCULTAR CONTRASEÑA CON EL ÍCONO DEL OJO ---
+    document.querySelectorAll('.toggle-password').forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            const input = this.previousElementSibling;
+            if (input.type === 'password') {
+                input.type = 'text';
+                this.classList.remove('bi-eye-slash-fill');
+                this.classList.add('bi-eye-fill');
+            } else {
+                input.type = 'password';
+                this.classList.remove('bi-eye-fill');
+                this.classList.add('bi-eye-slash-fill');
+            }
+        });
+    });
+
+
     // --- LÓGICA PARA AÑADIR CATEGORÍAS (AJAX) ---
     const addCategoryBtn = document.getElementById('add-category-btn');
     if (addCategoryBtn) {
@@ -91,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            fetch(BASE_URL + 'admin/ajax_add_category.php', {
+            fetch(BASE_URL + 'panel/ajax/add-category', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -157,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const field = this.name;
                 const value = this.value;
 
-                fetch(BASE_URL + 'admin/ajax_update_slide.php', {
+                fetch(BASE_URL + 'panel/ajax/update-slide', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
@@ -231,7 +248,7 @@ document.addEventListener('click', function(event) {
         const button = event.target;
         const productoId = button.dataset.productoId;
 
-        fetch(BASE_URL + 'toggle_wishlist.php', {
+        fetch(BASE_URL + 'toggle-wishlist', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -252,6 +269,33 @@ document.addEventListener('click', function(event) {
 });
 
 
+// --- LÓGICA PARA URL AMIGABLE EN BÚSQUEDA ---
+    const searchForm = document.getElementById('search-form');
+        //console.log("searchForm = ", searchForm);
+
+    if (searchForm) {
+        //console.log("searchForm IN 1= ", searchForm);
+        searchForm.addEventListener('submit', function(event) {
+            event.preventDefault();// 1. Prevenimos que el formulario se envíe de la forma tradicional
+            //console.log("searchForm IN 2= ", searchForm);
+            // 2. Obtenemos el valor del campo de búsqueda
+            const searchInput = document.getElementById('search-input');
+            const searchTerm = searchInput.value.trim();
+            //console.log("searchTerm = ", searchTerm);
+            // 3. Si hay un término de búsqueda, construimos la nueva URL y redirigimos
+            if (searchTerm) {
+                // 1. Reemplazamos uno o más espacios en blanco (\s+) con un guion (-)
+                const slugTerm = searchTerm.replace(/\s+/g, '-');
+                // 2. Codificamos el resultado para seguridad en la URL
+                const friendlySearchTerm = encodeURIComponent(slugTerm);
+                //console.log("friendlySearchTerm", friendlySearchTerm);
+                window.location.href = BASE_URL + 'buscar/' + friendlySearchTerm;
+                //window.location.href = BASE_URL + 'buscar.php?q=' + friendlySearchTerm;
+            }
+        });
+    }
+
+
 });
 
 document.querySelectorAll('.update-alt-text').forEach(input => {
@@ -259,7 +303,7 @@ document.querySelectorAll('.update-alt-text').forEach(input => {
         const mediaId = this.dataset.mediaId;
         const altText = this.value;
 
-        fetch(BASE_URL + 'admin/ajax_update_media.php', {
+        fetch(BASE_URL + 'panel/ajax/update-media', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
@@ -312,7 +356,7 @@ if (renameModalElement) {
                 const mediaId = button.dataset.mediaId;
                 const oldFilename = button.dataset.oldFilename;
                 
-                fetch(BASE_URL + 'admin/ajax_rename_media.php', {
+                fetch(BASE_URL + 'panel/ajax/rename-media', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     body: `id=${mediaId}&alt_text=${encodeURIComponent(newAltText)}&old_filename=${encodeURIComponent(oldFilename)}`
@@ -393,7 +437,7 @@ if (mediaModalElement) {
     // Cargar imágenes cuando se abre el modal
     mediaModalElement.addEventListener('show.bs.modal', function() {
         mediaGrid.innerHTML = '<p class="text-center">Cargando imágenes...</p>';
-        fetch(BASE_URL + 'admin/ajax_get_media.php')
+        fetch(BASE_URL + 'panel/ajax/get-media')
             .then(response => response.json())
             .then(data => {
                 let html = '';
@@ -464,6 +508,8 @@ if (mediaModalElement) {
     });
 }
 //-----------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------
 
 // Lógica para la validación de SKU en tiempo real
 const skuInput = document.getElementById('sku');
@@ -487,7 +533,7 @@ if (skuInput) {
         feedbackDiv.textContent = 'Verificando...';
         feedbackDiv.style.color = 'gray';
 
-        fetch(`${BASE_URL}admin/ajax_check_sku.php?sku=${encodeURIComponent(sku)}&current_id=${currentId}`)
+        fetch(`${BASE_URL}panel/ajax/check-sku?sku=${encodeURIComponent(sku)}&current_id=${currentId}`)
             .then(response => response.json())
             .then(data => {
                 if (data.exists) {
@@ -508,3 +554,4 @@ if (skuInput) {
             });
     });
 }
+

@@ -1,27 +1,8 @@
 <?php
 // admin/productos_masivos.php
-require_once '../includes/header.php';
-require_once '../includes/db_connection.php';
-// ... (Verificación de seguridad) ...
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
-// 1. Obtenemos todas las categorías una sola vez
-//$todas_las_categorias = $pdo->query("SELECT id, nombre FROM categorias ORDER BY nombre ASC")->fetchAll(PDO::FETCH_ASSOC);
-
-// --- LÓGICA DE FILTRADO Y PAGINACIÓN ---
-// 2. Obtenemos los productos y sus categorías asociadas
-/*
-$productos = $pdo->query("
-    SELECT p.*, 
-           GROUP_CONCAT(pg.id SEPARATOR '||') as galeria_ids,
-           GROUP_CONCAT(pg.url SEPARATOR '||') as galeria_urls,
-           GROUP_CONCAT(pc.categoria_id) as categorias_asignadas
-    FROM productos p
-    LEFT JOIN producto_galeria pg ON p.id = pg.producto_id AND pg.tipo = 'imagen'
-    LEFT JOIN producto_categorias pc ON p.id = pc.producto_id
-    GROUP BY p.id
-    ORDER BY p.id DESC
-")->fetchAll(PDO::FETCH_ASSOC);
-*/
 // --- LÓGICA DE FILTRADO Y PAGINACIÓN ---
 $resultados_por_pagina = 10;
 $pagina_actual = isset($_GET['pagina']) ? (int)$_GET['pagina'] : 1;
@@ -89,7 +70,7 @@ $todas_las_categorias = $pdo->query("SELECT id, nombre FROM categorias ORDER BY 
         </div>
         <div class="card-body">
             <p>Sube un archivo Excel para crear o actualizar productos de forma masiva.</p>
-            <form action="procesar_importacion.php" method="POST" enctype="multipart/form-data">
+            <form action="panel/productos/importar" method="POST" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="archivo_excel" class="form-label">Seleccionar archivo .xlsx:</label>
                     <input class="form-control" type="file" name="archivo_excel" id="archivo_excel" accept=".xlsx" required>
@@ -105,7 +86,7 @@ $todas_las_categorias = $pdo->query("SELECT id, nombre FROM categorias ORDER BY 
             <h5 class="my-0 fw-normal">Filtrar Productos</h5>
         </div>
         <div class="card-body">
-            <form action="productos_masivos.php" method="GET" class="row g-3 align-items-end">
+            <form action="panel/productos-masivos" method="GET" class="row g-3 align-items-end">
                 <div class="col-md-5">
                     <label for="q" class="form-label">Buscar por SKU, Nombre o Descripción:</label>
                     <input type="text" name="q" id="q" class="form-control" value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>">
@@ -137,23 +118,22 @@ $todas_las_categorias = $pdo->query("SELECT id, nombre FROM categorias ORDER BY 
     <nav>
         <ul class="pagination justify-content-center">
             <?php
-            // Preparamos los parámetros del filtro (q, categoria_id, etc.) quitando la paginación actual
+            // Preparamos los parámetros del filtro
             $query_params = $_GET;
             unset($query_params['pagina']);
             $query_string = http_build_query($query_params);
-
-            // Asegurarnos de que el query_string no esté vacío y termine con '&' si tiene contenido
             if (!empty($query_string)) {
-                $query_string .= '&';
+                $query_string = '&' . $query_string;
             }
 
             for ($i = 1; $i <= $total_paginas; $i++):
             ?>
                 <li class="page-item <?php if ($i == $pagina_actual) echo 'active'; ?>">
-                    <a class="page-link" href="?<?php echo $query_string; ?>pagina=<?php echo $i; ?>"><?php echo $i; ?></a>
+                    <a class="page-link" href="panel/productos-masivos?pagina=<?php echo $i . $query_string; ?>"><?php echo $i; ?></a>
                 </li>
             <?php endfor; ?>
         </ul>
+
     </nav>
 </div>
     </div>
@@ -199,7 +179,7 @@ $todas_las_categorias = $pdo->query("SELECT id, nombre FROM categorias ORDER BY 
                                 </button>
                             </td>
                             <td>
-                                <button type="button" class="btn btn-sm btn-outline-secondary btn-edit-descripcion" data-bs-toggle="modal" data-bs-target="#descripcionModal" data-descripcion="<?php echo htmlspecialchars($producto['descripcion_html']); ?>" data-producto-id="<?php echo $producto['id']; ?>">
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-edit-descripcion" data-bs-toggle="modal" data-bs-target="#descripcionModal" data-descripcion="<?php echo htmlspecialchars($producto['descripcion_html'] ?? ''); ?>" data-producto-id="<?php echo $producto['id']; ?>">
                                     Editar Descripción
                                 </button>
                             </td>
@@ -307,7 +287,7 @@ $todas_las_categorias = $pdo->query("SELECT id, nombre FROM categorias ORDER BY 
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <div class="modal-body">
-                <textarea class="form-control" id="modalDescripcionHTML" rows="15"></textarea>
+                <textarea class="form-control" id="modalDescripcionHTML" name="modalDescripcionHTML" rows="15"></textarea>
                 <input type="hidden" id="modalProductoId">
             </div>
             <div class="modal-footer">

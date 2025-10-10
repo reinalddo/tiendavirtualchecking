@@ -1,11 +1,40 @@
 <?php
 // producto_detalle.php
 // --- NUEVO: PREPARAR DATOS PARA EL SCHEMA ---
+require_once 'includes/config.php';
+
+// Ahora obtenemos el slug de la URL
+if (!isset($_GET['slug'])) {
+    header("Location: " . BASE_URL . "index.php");
+    exit();
+}
+$slug = trim($_GET['slug']);
+
+// 2. Obtener los detalles del producto de la BD
+$stmt = $pdo->prepare("SELECT p.* FROM productos p WHERE p.slug = ? AND p.es_activo = 1");
+$stmt->execute([$slug]);
+$producto = $stmt->fetch(PDO::FETCH_ASSOC);
+
+// --- ESTA ES LA VERIFICACIÓN IMPORTANTE ---
+if (!$producto) {
+    //// Si no se encuentra el producto, mostramos un mensaje amigable y detenemos todo.
+    //echo "<h1>Este producto no existe o no está disponible.</h1>";
+    //require_once 'includes/footer.php'; // Incluimos el footer para que la página se vea completa
+    //exit(); // Detenemos la ejecución del script
 require_once 'includes/header.php';
-require_once 'includes/db_connection.php';
+?>
 
-$producto_id = $_GET['id'];
+<div class="container text-center py-5">
+    <h1 class="display-1">Producto no Existente</h1>
+    <p class="lead mb-4">Este producto no existe o no está disponible.</p>
+    <a href="<?php echo BASE_URL; ?>" class="btn btn-primary">Volver a la Página de Inicio</a>
+</div>
 
+<?php
+require_once 'includes/footer.php';
+exit();
+}
+$producto_id = $producto['id'];
 
 $esta_en_wishlist = false;
 if (isset($_SESSION['usuario_id'])) {
@@ -14,19 +43,45 @@ if (isset($_SESSION['usuario_id'])) {
     $esta_en_wishlist = $stmt_wish->fetch() !== false;
 }
 
-// 2. Obtener los detalles del producto de la BD
-$stmt = $pdo->prepare("SELECT p.* FROM productos p WHERE p.id = ? AND p.es_activo = 1");
-$stmt->execute([$producto_id]);
-$producto = $stmt->fetch(PDO::FETCH_ASSOC);
+// 3. Obtener los items de la galería para este producto (CORRECCIÓN)
+$stmt_galeria = $pdo->prepare("SELECT * FROM producto_galeria WHERE producto_id = ? ORDER BY tipo ASC, orden ASC, id ASC");
+$stmt_galeria->execute([$producto_id]);
+$galeria_items = $stmt_galeria->fetchAll(PDO::FETCH_ASSOC);
 
-// --- ESTA ES LA VERIFICACIÓN IMPORTANTE ---
-if (!$producto) {
-    // Si no se encuentra el producto, mostramos un mensaje amigable y detenemos todo.
-    echo "<h1>Este producto no existe o no está disponible.</h1>";
-    require_once 'includes/footer.php'; // Incluimos el footer para que la página se vea completa
-    exit(); // Detenemos la ejecución del script
+// Preparamos las variables para las meta etiquetas dinámicas
+$meta_title = htmlspecialchars($producto['nombre']) . ' | ' . htmlspecialchars($config['tienda_nombre'] ?? 'Mi Tienda Web');
+// Tomamos los primeros 155 caracteres de la descripción sin HTML
+$meta_description = substr(strip_tags($producto['descripcion_html'] ?? ''), 0, 155);
+// Usamos la primera imagen de la galería para la vista previa
+$primera_imagen_relativa = !empty($galeria_items) ? 'uploads/' . $galeria_items[0]['url'] : null;
+
+// Comprobamos si el archivo de la primera imagen existe usando la ruta completa del servidor
+if ($primera_imagen_relativa && file_exists($_SERVER['DOCUMENT_ROOT'] . BASE_URL . $primera_imagen_relativa)) {
+    // Si existe, usamos la URL absoluta de esa imagen
+    $meta_image = ABSOLUTE_URL . htmlspecialchars($primera_imagen_relativa);
+} else {
+    // Si no, usamos la URL absoluta de la imagen de respaldo
+    $meta_image = ABSOLUTE_URL . 'imgredes/tienda_preview.png';
 }
 
+
+$schema_data = [
+    '@context' => 'https://schema.org/',
+    '@type' => 'Product',
+    'name' => $producto['nombre'],
+    'description' => strip_tags($producto['descripcion_html'] ?? ''),
+    'sku' => 'PROD-' . $producto['id'],
+    'image' => $meta_image, // Reutilizamos la URL absoluta de la meta tag
+    'offers' => [
+        '@type' => 'Offer',
+        // Para los bots, usamos la URL ABSOLUTA
+        'url' => ABSOLUTE_URL . 'producto/' . htmlspecialchars($producto['slug']),
+        'priceCurrency' => 'USD',
+        'price' => $producto['precio_usd'],
+        'availability' => ($producto['stock'] > 0) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+    ],
+];
+/*
 $schema_data = [
     '@context' => 'https://schema.org/',
     '@type' => 'Product',
@@ -36,12 +91,13 @@ $schema_data = [
     'image' => !empty($galeria_items) ? BASE_URL . 'uploads/' . $galeria_items[0]['url'] : '',
     'offers' => [
         '@type' => 'Offer',
-        'url' => BASE_URL . 'producto_detalle.php?id=' . $producto_id,
+        'url' => BASE_URL . 'producto/' . htmlspecialchars($producto['slug']),
         'priceCurrency' => 'USD', // Moneda base
         'price' => $producto['precio_usd'],
         'availability' => ($producto['stock'] > 0) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
     ],
 ];
+*/
 $stmt_qa = $pdo->prepare("SELECT q.*, u.nombre_pila as nombre_usuario 
                           FROM preguntas_respuestas q 
                           JOIN usuarios u ON q.usuario_id = u.id 
@@ -99,25 +155,6 @@ foreach ($configuraciones_raw as $setting) {
     $config[$setting['nombre_setting']] = $setting['valor_setting'];
 }
 
-// 1. Obtener y validar el ID del producto
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    echo "<h1>Producto no encontrado</h1>";
-    require_once 'includes/footer.php';
-    exit();
-}
-
-// 3. Obtener los items de la galería para este producto (CORRECCIÓN)
-$stmt_galeria = $pdo->prepare("SELECT * FROM producto_galeria WHERE producto_id = ? ORDER BY tipo ASC, orden ASC, id ASC");
-$stmt_galeria->execute([$producto_id]);
-$galeria_items = $stmt_galeria->fetchAll(PDO::FETCH_ASSOC);
-
-// Preparamos las variables para las meta etiquetas dinámicas
-$meta_title = htmlspecialchars($producto['nombre']) . ' | Mi Tienda Web';
-// Tomamos los primeros 155 caracteres de la descripción sin HTML
-$meta_description = substr(strip_tags($producto['descripcion_html'] ?? ''), 0, 155);
-// Usamos la primera imagen de la galería para la vista previa
-$meta_image = !empty($galeria_items) ? BASE_URL . 'uploads/' . htmlspecialchars($galeria_items[0]['url']) : BASE_URL . 'images/tienda_preview.jpg';
-
 // 4. Lógica para ver si el usuario puede opinar
 $puede_opinar = false;
 $ha_comprado = false;
@@ -137,6 +174,7 @@ if (isset($_SESSION['usuario_id'])) {
         $puede_opinar = true;
     }
 }
+require_once 'includes/header.php';
 
 // Descomenta la siguiente sección si necesitas depurar de nuevo
 /*
@@ -151,8 +189,6 @@ echo "---------------------------\n";
 echo "</pre>";
 */
 ?>
-<link rel="stylesheet" href="<?php echo BASE_URL; ?>css/gallery-detail.css">
-<link rel="stylesheet" href="<?php echo BASE_URL; ?>css/product-detail-style.css">
 
 <div class="container-fluid">
     <div class="row">
@@ -163,7 +199,7 @@ echo "</pre>";
                     <div class="detail-gallery-main" id="detail-gallery-main">
                         <?php if (!empty($galeria_items)): $primer_item = $galeria_items[0]; ?>
                             <?php if ($primer_item['tipo'] == 'imagen'): ?>
-                                <img src="<?php echo BASE_URL . 'uploads/' . htmlspecialchars($primer_item['url']); ?>" alt="Vista principal" class="clickable-gallery-image" data-index="0">
+                                <img src="<?php echo 'uploads/' . htmlspecialchars($primer_item['url']); ?>" alt="Vista principal" class="clickable-gallery-image" data-index="0">
                             <?php elseif ($primer_item['tipo'] == 'youtube'): ?>
                                 <div class="video-wrapper">
                                     <iframe src="https://www.youtube.com/embed/<?php echo htmlspecialchars($primer_item['url']); ?>" frameborder="0" allowfullscreen></iframe>
@@ -178,7 +214,7 @@ echo "</pre>";
                 <?php foreach ($galeria_items as $index => $item): ?>
                     <div class="detail-thumbnail" data-index="<?php echo $index; ?>" data-tipo="<?php echo $item['tipo']; ?>" data-url="<?php echo htmlspecialchars($item['url']); ?>">
                         <?php if ($item['tipo'] == 'imagen'): ?>
-                            <img src="<?php echo BASE_URL . 'uploads/' . htmlspecialchars($item['url']); ?>" alt="Miniatura">
+                            <img src="<?php echo 'uploads/' . htmlspecialchars($item['url']); ?>" alt="Miniatura">
                         <?php elseif ($item['tipo'] == 'youtube'): ?>
                             <img src="https://img.youtube.com/vi/<?php echo htmlspecialchars($item['url']); ?>/0.jpg" alt="Miniatura de Video">
                         <?php endif; ?>
@@ -196,7 +232,7 @@ echo "</pre>";
                         <?php echo format_price($producto['precio_usd'], $producto['precio_descuento']); ?>
                 </p>
                 <p><strong>Stock disponible:</strong> <?php echo htmlspecialchars($producto['stock']); ?></p>
-                <form action="carrito_acciones.php" method="POST">
+                <form action="carrito_acciones" method="POST">
                     <input type="hidden" name="producto_id" value="<?php echo $producto['id']; ?>">
                     
                     <input type="hidden" name="return_url" value="<?php echo $_SERVER['REQUEST_URI']; ?>">
@@ -212,6 +248,36 @@ echo "</pre>";
                         </button>
                     <?php endif; ?>
                 </div>
+
+                <div class="social-share-buttons mt-4">
+                    <strong>Compartir este producto:</strong>
+                    <?php
+                    // Preparamos las variables para compartir
+                    $url_producto_actual = ABSOLUTE_URL . 'producto/' . htmlspecialchars($producto['slug']);
+                    $nombre_producto = $producto['nombre'];
+                    $imagen_compartir = $meta_image; // $meta_image ya tiene la URL absoluta
+
+                    // Texto para Twitter (no se le añade la URL, Twitter lo hace solo)
+                    $texto_twitter = urlencode("¡Échale un vistazo a este producto!: " . $nombre_producto);
+
+                    // Texto para WhatsApp (con saltos de línea para mejor formato)
+                    $texto_whatsapp = urlencode("¡Échale un vistazo a este producto!\n\n" . $nombre_producto . "\n" . $url_producto_actual);
+
+                    $url_facebook_share = "https://www.facebook.com/sharer/sharer.php?u=" . urlencode($url_producto_actual);
+
+                    // Codificamos el resto de variables para usarlas en los enlaces
+                    $url_codificada = urlencode($url_producto_actual);
+                    $nombre_codificado = urlencode($nombre_producto);
+                    $imagen_codificada = urlencode($imagen_compartir);
+                    ?>
+                    <div class="mt-2">
+                        <a href="<?php echo $url_facebook_share; ?>" target="_blank" class="share-btn facebook" title="Compartir en Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="https://twitter.com/intent/tweet?url=<?php echo $url_codificada; ?>&text=<?php echo $texto_twitter; ?>" target="_blank" class="share-btn twitter" title="Compartir en X"><i class="bi bi-twitter-x"></i></a>
+                        <a href="https://wa.me/?text=<?php echo $texto_whatsapp; ?>" target="_blank" class="share-btn whatsapp" title="Compartir en WhatsApp"><i class="bi bi-whatsapp"></i></a>
+                        <a href="https://pinterest.com/pin/create/button/?url=<?php echo $url_codificada; ?>&media=<?php echo $imagen_codificada; ?>&description=<?php echo $nombre_codificado; ?>" target="_blank" class="share-btn pinterest" title="Guardar en Pinterest"><i class="bi bi-pinterest"></i></a>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -273,7 +339,7 @@ echo "</pre>";
                 <div class="review-form-container">
                     <?php if ($puede_opinar): ?>
                         <h4>Deja tu valoración</h4>
-                        <form action="guardar_resena.php" method="POST">
+                        <form action="accion/guardar-resena" method="POST">
                             <input type="hidden" name="producto_id" value="<?php echo $producto_id; ?>">
                             <div class="rating mb-2">
                                 <input type="radio" id="star5" name="calificacion" value="5" required/><label for="star5" title="5 estrellas"></label>
@@ -316,7 +382,7 @@ echo "</pre>";
                 
                 <?php if (isset($_SESSION['usuario_id']) && $_SESSION['usuario_rol'] === 'cliente'): ?>
                     <h4>Haz una pregunta</h4>
-                    <form action="guardar_pregunta.php" method="POST">
+                    <form action="guardar-pregunta" method="POST">
                          <input type="hidden" name="producto_id" value="<?php echo $producto_id; ?>">
                          <div class="mb-3">
                             <textarea name="pregunta" class="form-control" rows="4" required placeholder="Escribe tu pregunta aquí..."></textarea>
@@ -356,6 +422,6 @@ echo "</pre>";
             </div>
         </div>
 
-<script src="<?php echo BASE_URL; ?>js/gallery-detail.js"></script>
+<script src="js/gallery-detail.js"></script>
 
 <?php require_once 'includes/footer.php'; ?>

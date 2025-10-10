@@ -1,15 +1,7 @@
 <?php
 // /admin/ajax_get_media.php
-session_start();
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
-
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    http_response_code(403);
-    echo json_encode(['error' => 'Acceso denegado.']);
-    exit();
-}
+verificar_sesion_admin();
 
 // 1. Obtenemos todos los registros de la base de datos
 $media_items_raw = $pdo->query("SELECT id, nombre_archivo, alt_text FROM media_library WHERE tipo_archivo LIKE 'image/%' ORDER BY fecha_subida DESC")->fetchAll(PDO::FETCH_ASSOC);

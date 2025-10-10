@@ -1,7 +1,7 @@
 <?php
 // admin/ajax_check_sku.php
-require_once '../includes/db_connection.php';
-session_start();
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin' || empty($_GET['sku'])) {
     http_response_code(403);

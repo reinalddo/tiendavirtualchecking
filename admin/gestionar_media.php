@@ -3,14 +3,7 @@
 
 // 1. TODA LA LÓGICA PHP PRIMERO
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
-//session_start();
-
-// Verificación de seguridad de admin
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit();
-}
+verificar_sesion_admin();
 
 // --- LÓGICA PARA ELIMINAR ---
 
@@ -32,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['media_id'])) {
     $stmt_delete->execute([$media_id]);
 
     $_SESSION['mensaje_carrito'] = 'Archivo eliminado correctamente.';
-    header("Location: gestionar_media.php");
+    header("Location: ".BASE_URL."panel/gestionar_media");
     exit();
 }
 
@@ -50,7 +43,7 @@ require_once '../includes/header.php';
     <div class="card shadow-sm">
         <div class="card-header"><h5 class="my-0 fw-normal">Subir Nuevos Archivos</h5></div>
         <div class="card-body">
-            <form action="upload_media.php" method="POST" enctype="multipart/form-data">
+            <form action="panel/media/upload" method="POST" enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="media_files" class="form-label">Seleccionar archivo(s):</label>
                     <input class="form-control" type="file" name="media_files[]" id="media_files" required multiple>
@@ -79,7 +72,7 @@ require_once '../includes/header.php';
                             <button class="btn btn-sm btn-secondary rename-media-btn" 
                                     data-media-id="<?php echo $item['id']; ?>"
                                     data-old-filename="<?php echo htmlspecialchars($item['nombre_archivo']); ?>">Renombrar</button>
-                            <form action="gestionar_media.php" method="POST" class="d-inline">
+                            <form action="panel/gestionar_media" method="POST" class="d-inline">
                                 <input type="hidden" name="media_id" value="<?php echo $item['id']; ?>">
                                 <button type="submit" name="delete_media" class="btn btn-sm btn-danger confirm-delete">Eliminar</button>
                             </form>

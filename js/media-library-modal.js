@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Función para cargar/refrescar las imágenes en la biblioteca
     const loadMediaImages = () => {
         mediaGrid.innerHTML = '<p class="text-center">Cargando...</p>';
-        fetch(BASE_URL + 'admin/ajax_get_media.php')
+        fetch(BASE_URL + 'panel/ajax/get-media')
             .then(response => response.json())
             .then(data => {
                 let html = '';
@@ -44,12 +44,14 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             const formData = new FormData(this);
 
-            fetch(BASE_URL + 'admin/ajax_upload_media.php', {
+            fetch(BASE_URL + 'panel/ajax/upload-media', {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
+                console.log("data.success", data.success);
+                console.log("data.uploaded_count", data.uploaded_count);
                 if (data.success && data.uploaded_count > 0) {
                     // Si la subida fue exitosa, refrescamos la galería y cambiamos de pestaña
                     loadMediaImages();
@@ -57,7 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     tab.show();
                     uploadForm.reset(); // Resetea el formulario y limpia el campo de archivos
                 } else {
-                    alert('Error: No se pudo subir el archivo.');
+                    alert('Error: No se pudo subir el archivo. Debe ser menor de 2MB');
                 }
             })
             .catch(error => console.error('Error al subir:', error));

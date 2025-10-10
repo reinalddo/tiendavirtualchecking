@@ -1,12 +1,7 @@
 <?php
 // admin/formulario_producto.php
-require_once '../includes/header.php';
-require_once '../includes/db_connection.php';
-
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: /login.php');
-    exit();
-}
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 $producto = [];
 $categorias_producto = [];
@@ -47,7 +42,7 @@ $categorias_todas = $pdo->query("SELECT * FROM categorias ORDER BY nombre")->fet
                         <h1 class="my-0 fw-normal fs-4"><?php echo $titulo; ?></h1>
                     </div>
                     <div class="card-body">
-                        <form action="guardar_producto.php" method="POST" enctype="multipart/form-data" id="product-form">
+                        <form action="panel/producto/guardar" method="POST" enctype="multipart/form-data" id="product-form">
                             <input type="hidden" name="id" value="<?php echo htmlspecialchars($producto['id'] ?? ''); ?>">
 
                             <div class="row">
@@ -154,7 +149,7 @@ $categorias_todas = $pdo->query("SELECT * FROM categorias ORDER BY nombre")->fet
                             </div>
                             
                             <div class="mt-4 text-end">
-                                <a href="gestionar_productos.php" class="btn btn-secondary">Cancelar</a>
+                                <a href="panel/gestionar_productos" class="btn btn-secondary">Cancelar</a>
                                 <button type="submit" class="btn btn-primary">Guardar Producto</button>
                             </div>
                         </form>

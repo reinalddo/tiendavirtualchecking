@@ -1,8 +1,7 @@
 <?php
 // admin/enviar_mensaje_admin.php (Versión Corregida)
-session_start();
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
+verificar_sesion_admin();
 
 // 1. Verificación de seguridad básica (ya no comprueba si el mensaje está vacío)
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
@@ -40,6 +39,6 @@ if (!empty($mensaje) || !empty($archivo_adjunto_nombre)) {
 }
 
 // 4. Redirigir siempre de vuelta a la conversación
-header('Location: ' . BASE_URL . 'admin/ver_conversacion.php?id=' . $conversacion_id);
+header('Location: ' . BASE_URL . 'panel/conversacion/' . $conversacion_id);
 exit();
 ?>

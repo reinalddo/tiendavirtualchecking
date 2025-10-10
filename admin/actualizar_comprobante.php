@@ -1,15 +1,8 @@
 <?php
 // admin/actualizar_comprobante.php (Versión Corregida)
-session_start();
-require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
-require_once '../includes/helpers.php'; // Necesario para crear_notificacion()
 
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit();
-}
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 $comprobante_id = $_GET['id'] ?? 0;
 $accion = $_GET['accion'] ?? '';
@@ -41,6 +34,6 @@ if ($comprobante_id > 0 && $pedido_id > 0 && in_array($accion, ['aprobar', 'rech
     crear_notificacion($pdo, $cliente_id, $mensaje_cliente, $url_cliente);
 }
 
-header('Location: ' . BASE_URL . 'admin/detalle_pedido.php?id=' . $pedido_id);
+header('Location: ' . BASE_URL . 'panel/pedido/' . $pedido_id);
 exit();
 ?>

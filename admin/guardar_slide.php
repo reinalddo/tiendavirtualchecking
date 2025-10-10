@@ -1,16 +1,18 @@
 <?php
 // admin/guardar_slide.php
-//session_start();
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
-// ... (Verificación de seguridad de admin) ...
+verificar_sesion_admin();
+
 $titulo = $_POST['titulo'] ?? '';
 $enlace_final = '';
 
 // Priorizamos el producto seleccionado
 if (!empty($_POST['producto_id_enlace'])) {
     $producto_id = (int)$_POST['producto_id_enlace'];
-    $enlace_final = 'producto_detalle.php?id=' . $producto_id;
+    $stmt_slug = $pdo->prepare("SELECT slug FROM productos WHERE id = ?");
+    $stmt_slug->execute([$producto_id]);
+    $slug = $stmt_slug->fetchColumn();
+    $enlace_final = 'producto/' . $slug;
 } 
 // Si no hay producto, usamos la URL manual
 elseif (!empty($_POST['enlace_url'])) {
@@ -42,6 +44,6 @@ if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
 } else {
     $_SESSION['mensaje_carrito'] = 'Error: Hubo un problema con la subida del archivo.';
 }
-header('Location: ' . BASE_URL . 'admin/gestionar_galeria_inicio.php');
+header('Location: ' . BASE_URL . 'panel/gestionar-galeria');
 exit();
 ?>

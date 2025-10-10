@@ -20,7 +20,7 @@ try {
 
     // 2. OBTENER LAS CATEGORÍAS DESTACADAS
     $stmt_cat_destacadas = $pdo->query("
-        SELECT id, nombre FROM categorias 
+        SELECT id, nombre, slug FROM categorias 
         WHERE mostrar_en_inicio = 1 
         AND id IN (SELECT DISTINCT categoria_id FROM producto_categorias)
     ");
@@ -98,7 +98,7 @@ try {
                     <section class="featured-category mb-5">
                         <div class="category-title-wrapper d-flex justify-content-between align-items-center">
                             <h2 class="category-title"><?php echo htmlspecialchars($categoria['nombre']); ?></h2>
-                            <a href="productos.php?categoria=<?php echo $categoria['id']; ?>" class="btn btn-outline-primary">Ver toda la categoría</a>
+                            <a href="categoria/<?php echo htmlspecialchars($categoria['slug']); ?>" class="btn btn-outline-primary">Ver toda la categoría</a>
                         </div>
                         <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
                             <?php foreach ($productos as $producto): ?>

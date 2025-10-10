@@ -1,14 +1,7 @@
 <?php
 // admin/eliminar_slide.php
-session_start();
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
-
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin' || !isset($_GET['id'])) {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit();
-}
+verificar_sesion_admin();
 
 $slide_id = $_GET['id'];
 
@@ -30,6 +23,6 @@ $stmt_delete = $pdo->prepare("DELETE FROM hero_gallery WHERE id = ?");
 $stmt_delete->execute([$slide_id]);
 
 $_SESSION['mensaje_carrito'] = 'Slide eliminado correctamente.';
-header('Location: ' . BASE_URL . 'admin/gestionar_galeria_inicio.php');
+header('Location: ' . BASE_URL . 'panel/gestionar-galeria');
 exit();
 ?>

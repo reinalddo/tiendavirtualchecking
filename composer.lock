@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0b552e1ba865f2911a41421f9a5848c9",
+    "content-hash": "9695dacf58d049ec0469b7f9a4bd509f",
     "packages": [
         {
             "name": "composer/pcre",
@@ -996,57 +996,6 @@
             "time": "2025-03-24T10:02:05+00:00"
         },
         {
-            "name": "openpayu/openpayu",
-            "version": "2.3.6",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/PayU-EMEA/openpayu_php.git",
-                "reference": "3d5a609147777e2ba64d72957492457cdd67d239"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/PayU-EMEA/openpayu_php/zipball/3d5a609147777e2ba64d72957492457cdd67d239",
-                "reference": "3d5a609147777e2ba64d72957492457cdd67d239",
-                "shasum": ""
-            },
-            "require": {
-                "ext-curl": "*",
-                "ext-hash": "*",
-                "ext-json": "*",
-                "php": ">=5.5.19 | >=5.6.3"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^5.3"
-            },
-            "type": "library",
-            "extra": [
-                {
-                    "engine": "PHP SDK"
-                }
-            ],
-            "autoload": {
-                "classmap": [
-                    "lib/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "apache-2.0"
-            ],
-            "authors": [
-                {
-                    "name": "OpenPayU",
-                    "homepage": "http://developers.payu.com"
-                }
-            ],
-            "description": "OpenPayU PHP Library",
-            "support": {
-                "issues": "https://github.com/PayU/openpayu_php/issues",
-                "source": "https://github.com/PayU-EMEA/openpayu_php/tree/v2.3.6"
-            },
-            "time": "2023-07-27T07:47:25+00:00"
-        },
-        {
             "name": "paragonie/constant_time_encoding",
             "version": "v3.0.0",
             "source": {
@@ -1162,6 +1111,87 @@
                 "source": "https://github.com/paragonie/random_compat"
             },
             "time": "2020-10-15T08:29:30+00:00"
+        },
+        {
+            "name": "phpmailer/phpmailer",
+            "version": "v6.10.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/PHPMailer/PHPMailer.git",
+                "reference": "bf74d75a1fde6beaa34a0ddae2ec5fce0f72a144"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/PHPMailer/PHPMailer/zipball/bf74d75a1fde6beaa34a0ddae2ec5fce0f72a144",
+                "reference": "bf74d75a1fde6beaa34a0ddae2ec5fce0f72a144",
+                "shasum": ""
+            },
+            "require": {
+                "ext-ctype": "*",
+                "ext-filter": "*",
+                "ext-hash": "*",
+                "php": ">=5.5.0"
+            },
+            "require-dev": {
+                "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+                "doctrine/annotations": "^1.2.6 || ^1.13.3",
+                "php-parallel-lint/php-console-highlighter": "^1.0.0",
+                "php-parallel-lint/php-parallel-lint": "^1.3.2",
+                "phpcompatibility/php-compatibility": "^9.3.5",
+                "roave/security-advisories": "dev-latest",
+                "squizlabs/php_codesniffer": "^3.7.2",
+                "yoast/phpunit-polyfills": "^1.0.4"
+            },
+            "suggest": {
+                "decomplexity/SendOauth2": "Adapter for using XOAUTH2 authentication",
+                "ext-mbstring": "Needed to send email in multibyte encoding charset or decode encoded addresses",
+                "ext-openssl": "Needed for secure SMTP sending and DKIM signing",
+                "greew/oauth2-azure-provider": "Needed for Microsoft Azure XOAUTH2 authentication",
+                "hayageek/oauth2-yahoo": "Needed for Yahoo XOAUTH2 authentication",
+                "league/oauth2-google": "Needed for Google XOAUTH2 authentication",
+                "psr/log": "For optional PSR-3 debug logging",
+                "symfony/polyfill-mbstring": "To support UTF-8 if the Mbstring PHP extension is not enabled (^1.2)",
+                "thenetworg/oauth2-azure": "Needed for Microsoft XOAUTH2 authentication"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PHPMailer\\PHPMailer\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-2.1-only"
+            ],
+            "authors": [
+                {
+                    "name": "Marcus Bointon",
+                    "email": "phpmailer@synchromedia.co.uk"
+                },
+                {
+                    "name": "Jim Jagielski",
+                    "email": "jimjag@gmail.com"
+                },
+                {
+                    "name": "Andy Prevost",
+                    "email": "codeworxtech@users.sourceforge.net"
+                },
+                {
+                    "name": "Brent R. Matzelle"
+                }
+            ],
+            "description": "PHPMailer is a full-featured email creation and transfer class for PHP",
+            "support": {
+                "issues": "https://github.com/PHPMailer/PHPMailer/issues",
+                "source": "https://github.com/PHPMailer/PHPMailer/tree/v6.10.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/Synchro",
+                    "type": "github"
+                }
+            ],
+            "time": "2025-04-24T15:19:31+00:00"
         },
         {
             "name": "phpoffice/phpspreadsheet",

@@ -3,6 +3,18 @@
 require_once 'includes/config.php';
 require_once 'includes/db_connection.php';
 
+// 1. Definimos la ruta COMPLETA al archivo de certificados en tu proyecto.
+$caBundlePath = __DIR__ . '/vendor/google/auth/src/cacert.pem';
+
+// 2. Creamos un cliente HTTP y le forzamos a usar nuestro archivo de certificados.
+$httpClient = new \GuzzleHttp\Client([
+    'verify' => $caBundlePath,
+]);
+
+// 3. Pasamos este cliente configurado a la librería de Google.
+$client = new Google\Client();
+$client->setHttpClient($httpClient);
+
 // Crear cliente de Google
 $client = new Google\Client();
 $client->setClientId(GOOGLE_CLIENT_ID);

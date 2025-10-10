@@ -1,8 +1,7 @@
 <?php
 // admin/gestionar_clientes.php
-require_once '../includes/header.php';
-require_once '../includes/db_connection.php';
-// ... (Verificación de seguridad de admin) ...
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 // NUEVA CONSULTA: Obtenemos el conteo de pedidos pendientes y pagados para cada cliente
 $clientes = $pdo->query("
@@ -63,7 +62,7 @@ $clientes = $pdo->query("
                                 <?php endif; ?>
                             </td>
                             <td class="text-end">
-                                <a href="ver_pedidos.php?cliente_id=<?php echo $cliente['id']; ?>" class="btn btn-sm btn-secondary">Ver Pedidos</a>
+                                <a href="panel/pedidos/cliente/<?php echo $cliente['id']; ?>" class="btn btn-sm btn-secondary">Ver Pedidos</a>
                             </td>
                         </tr>
                         <?php endforeach; ?>

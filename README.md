@@ -1,2 +1,2 @@
-# tiendavirtualchecking
-# tiendavirtualchecking
+# tiendavirtual
+Archivos para proyecto tienda virtual

@@ -79,3 +79,13 @@
     font-size: 0.85rem;
     color: #6c757d;
 }
+
+/* Estilos para el dropdown de notificaciones */
+#notification-list {
+    max-height: 450px; /* Altura máxima antes de que aparezca el scroll */
+    overflow-y: auto;  /* Muestra el scroll vertical solo si es necesario */
+}
+
+.navbar .d-flex.mx-auto {
+    margin-bottom: 0 !important;
+}

@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const field = this.name;
             const value = this.type === 'checkbox' ? this.checked : this.value;
 
-            fetch(BASE_URL + 'admin/ajax_update_categoria.php', {
+            fetch(BASE_URL + 'panel/ajax/update-category', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body: `id=${id}&field=${field}&value=${encodeURIComponent(value)}`

@@ -1,18 +1,12 @@
 <?php
 // admin/guardar_producto.php
-session_start();
-require_once '../includes/db_connection.php';
 require_once '../includes/config.php';
-
-// 1. Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin' || $_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit();
-}
+verificar_sesion_admin();
 
 // Recoger datos del formulario (ya no se incluye moneda_id)
 $id = $_POST['id'] ?? null;
 $nombre = trim($_POST['nombre'] ?? '');
+$slug = generar_slug($nombre); // Generamos el slug a partir del nombre
 $descripcion_html = trim($_POST['descripcion_html'] ?? '');
 $precio_usd = $_POST['precio_usd'] ?? 0;
 $stock = max(0, (int)($_POST['stock'] ?? 0));
@@ -26,14 +20,14 @@ $producto_id = $id;
 
 try {
     if (empty($id)) {
-        $sql = "INSERT INTO productos (nombre, sku, descripcion_html, precio_usd, stock, es_activo, es_fisico, precio_descuento) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO productos (nombre, slug, sku, descripcion_html, precio_usd, stock, es_activo, es_fisico, precio_descuento) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$nombre, $sku, $descripcion_html, $precio_usd, $stock, $es_activo, $es_fisico, $precio_descuento]);
+        $stmt->execute([$nombre, $slug, $sku, $descripcion_html, $precio_usd, $stock, $es_activo, $es_fisico, $precio_descuento]);
         $producto_id = $pdo->lastInsertId();
     } else {
-        $sql = "UPDATE productos SET nombre = ?, sku = ?, descripcion_html = ?, precio_usd = ?, stock = ?, es_activo = ?, es_fisico = ?, precio_descuento = ? WHERE id = ?";
+        $sql = "UPDATE productos SET nombre = ?, slug = ?, sku = ?, descripcion_html = ?, precio_usd = ?, stock = ?, es_activo = ?, es_fisico = ?, precio_descuento = ? WHERE id = ?";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute([$nombre, $sku, $descripcion_html, $precio_usd, $stock, $es_activo, $es_fisico, $precio_descuento, $id]);
+        $stmt->execute([$nombre, $slug, $sku, $descripcion_html, $precio_usd, $stock, $es_activo, $es_fisico, $precio_descuento, $id]);
         
         $stmt_delete_cat = $pdo->prepare("DELETE FROM producto_categorias WHERE producto_id = ?");
         $stmt_delete_cat->execute([$producto_id]);
@@ -97,7 +91,7 @@ try {
 
     
     $_SESSION['mensaje_carrito'] = '¡Producto guardado exitosamente!';
-    header("Location: gestionar_productos.php");
+    header("Location: " . BASE_URL . "panel/gestionar_productos");
     exit();
 
 } catch (Exception $e) {
@@ -109,8 +103,8 @@ try {
     }
 
     // Redirigimos de vuelta al formulario
-    $redirect_url = empty($id) ? 'formulario_producto.php' : 'formulario_producto.php?id=' . $id;
-    header("Location: " . $redirect_url);
+    $redirect_url = empty($id) ? 'panel/producto/nuevo' : 'panel/producto/editar/' . $id;
+    header("Location: " . BASE_URL . $redirect_url);
     exit();
 }
 ?>

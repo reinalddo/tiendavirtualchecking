@@ -1,0 +1,220 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /
+
+
+    # --- REDIRECCIÓN DE .PHP A URL AMIGABLE ---
+    # Esta sección se asegura de que nadie vea la extensión .php en el navegador.
+
+    # 1. Redirige peticiones directas a "index.php" hacia la raíz "/"
+    RewriteCond %{THE_REQUEST} \s/index\.php[\s?] [NC]
+    RewriteRule ^index\.php$ / [R=301,L]
+
+    # 2. Redirige peticiones a "archivo.php" hacia "/archivo"
+    RewriteCond %{THE_REQUEST} \s/([^\s]+)\.php[\s?] [NC]
+    RewriteRule ([^/.]+)\.php$ /$1 [R=301,L]
+    # --- FIN REDIRECCIÓN ---
+
+    # --- REGLAS MÁS ESPECÍFICAS PRIMERO ---
+
+    # 1. Regla para productos (Ej: /producto/nombre-del-producto)
+    RewriteRule ^producto/([a-zA-Z0-9\-]+)/?$ producto_detalle.php?slug=$1 [L,QSA]
+
+    # 2. Regla para categorías (Ej: /categoria/nombre-de-categoria)
+    RewriteRule ^categoria/([a-zA-Z0-9\-]+)/?$ productos.php?categoria_slug=$1 [L,QSA]
+
+    # 3. Regla para la página de búsqueda (Ej: /buscar/termino-buscado)
+    RewriteRule ^buscar/([^/]+)/?$ buscar.php?q=$1 [L,QSA]
+
+    # Regla para el carrito de compras
+    RewriteRule ^carrito/?$ ver_carrito.php [L]
+
+    # Regla para el checkout
+    RewriteRule ^checkout/?$ checkout.php [L]
+    RewriteRule ^carrito/aplicar-cupon/?$ aplicar_cupon.php [L]
+
+    #Regla para enviar correo en contacto
+    RewriteRule ^enviar-contacto/?$ enviar_contacto.php [L]
+
+    #Regla para actualizar Perfil 
+    RewriteRule ^datos/actualizar/?$ actualizar_perfil.php [L]
+
+    # Regla para las acciones del carrito (añadir, eliminar)
+    RewriteRule ^carrito-acciones/?$ carrito_acciones.php [L]
+
+    #Regla para subir el comprobante
+    RewriteRule ^perfil/subir-comprobante/?$ subir_comprobante.php [L]
+
+    # Regla para gracias
+    RewriteRule ^gracias/([0-9]+)/?$ gracias.php?pedido_id=$1 [L,QSA]
+
+    # Regla para perfil
+    RewriteRule ^perfil/?$ perfil.php [L]
+
+    # Regla para editar-perfil
+    RewriteRule ^editar-perfil/?$ editar_perfil.php [L]
+
+    # Regla para wishlist
+    RewriteRule ^wishlist/?$ wishlist.php [L]
+
+    # Regla para procesar pedido
+    RewriteRule ^procesar_pedido/?$ procesar_pedido.php [L]
+
+    # Regla para ver un pedido específico de un cliente # Ej: /panel/pedidos/cliente/6/pedido/63
+    RewriteRule ^panel/pedidos/cliente/([0-9]+)/pedido/([0-9]+)/?$ admin/detalle_pedido.php?cliente_id=$1&id=$2 [L,QSA]
+
+    # Regla para ver una conversación (más específica, va primero) # Ej: /panel/conversacion/20
+    RewriteRule ^panel/conversacion/([0-9]+)/?$ admin/ver_conversacion.php?id=$1 [L,QSA]
+
+    # Regla para añadir producto
+    RewriteRule ^panel/producto/nuevo/?$ admin/formulario_producto.php [L]
+
+    #Regla para Responder la pregunta
+    RewriteRule ^panel/pregunta/responder/([0-9]+)/?$ admin/responder_pregunta.php?id=$1 [L,QSA]
+
+    # Regla para VER la lista de preguntas
+    RewriteRule ^panel/ver_preguntas/?$ admin/ver_preguntas.php [L]
+
+    # Regla para guardar un producto (nuevo o editado)
+    RewriteRule ^panel/producto/guardar/?$ admin/guardar_producto.php [L]
+
+    # --------------------------------------------------------------------------------------------------------------------------------------
+
+    # Regla para el AJAX que asocia imágenes en la gestión masiva
+    RewriteRule ^panel/ajax/associate-media/?$ admin/ajax_associate_media.php [L]
+    RewriteRule ^panel/ajax/delete-gallery-item/?$ admin/ajax_delete_gallery_item.php [L]
+    RewriteRule ^panel/ajax/update-product-category/?$ admin/ajax_update_product_category.php [L]
+
+    # Regla para aprobar/rechazar un comprobante
+    RewriteRule ^panel/comprobante/actualizar/([0-9]+)/([a-z]+)/([0-9]+)/?$ admin/actualizar_comprobante.php?id=$1&accion=$2&pedido_id=$3 [L,QSA]
+
+    #Regla para importar productos masivos
+    RewriteRule ^panel/productos/importar/?$ admin/procesar_importacion.php [L]
+
+    # Regla para la página de gestión de cupones
+    RewriteRule ^panel/gestionar-cupones/?$ admin/gestionar_cupones.php [L]
+    # Regla para el AJAX que actualiza un cupón
+    RewriteRule ^panel/ajax/update-cupon/?$ admin/ajax_update_cupon.php [L]
+
+    #Regla para gestionar categorias
+    RewriteRule ^panel/gestionar-categorias/?$ admin/gestionar_categorias.php [L]
+
+    # Regla para el AJAX que actualiza una categoría
+    RewriteRule ^panel/ajax/update-category/?$ admin/ajax_update_categoria.php [L]
+
+    # Regla para la página de gestión de la galería de inicio
+    RewriteRule ^panel/gestionar-galeria/?$ admin/gestionar_galeria_inicio.php [L]
+    # Regla para guardar un nuevo slide
+    RewriteRule ^panel/galeria/guardar/?$ admin/guardar_slide.php [L]
+    # Regla para eliminar un slide
+    RewriteRule ^panel/galeria/eliminar/([0-9]+)/?$ admin/eliminar_slide.php?id=$1 [L]
+    # Regla para el AJAX que actualiza un slide
+    RewriteRule ^panel/ajax/update-slide/?$ admin/ajax_update_slide.php [L]
+    # Regla para la página de gestión de la galería de inicio
+    #RewriteRule ^admin/gestionar_galeria_inicio/?$ admin/gestionar_galeria_inicio.php [L]
+
+    #Regla para Procesar el catalogo visual
+    RewriteRule ^panel/procesar-catalogo-visual/?$ admin/procesar_catalogo_visual.php [L]
+
+    #Regla para generar catálogos
+    RewriteRule ^panel/generar-catalogo/?$ admin/generar_catalogo.php [L]
+    RewriteRule ^panel/procesar-catalogo/?$ admin/procesar_catalogo.php [L]
+
+    #Regla para la gestión de monedas 
+    RewriteRule ^panel/gestionar-monedas/?$ admin/gestionar_monedas.php [L]
+    # Regla para el AJAX que actualiza una moneda
+    RewriteRule ^panel/ajax/update-moneda/?$ admin/ajax_update_moneda.php [L]
+
+    # Reglas para el AJAX de la Gestión Masiva
+    RewriteRule ^panel/ajax/update-producto/?$ admin/ajax_update_producto.php [L]
+    RewriteRule ^panel/ajax/save-categories/?$ admin/ajax_save_product_categories.php [L]
+    RewriteRule ^panel/ajax/guardar-descripcion/?$ admin/ajax_guardar_descripcion.php [L]
+    #RewriteRule ^panel/ajax/get-descripcion/?$ admin/ajax_get_descripcion.php [L,QSA]
+
+    #Regla para la biblioteca de medios
+    RewriteRule ^panel/media/upload/?$ admin/upload_media.php [L]
+
+    # Regla para la página de Configuración del Sitio
+    RewriteRule ^panel/configuracion-sitio/?$ admin/configuracion_sitio.php [L]
+
+    # Reglas para la Biblioteca de Medios (AJAX)
+    RewriteRule ^panel/ajax/get-media/?$ admin/ajax_get_media.php [L,QSA]
+    RewriteRule ^panel/ajax/update-media/?$ admin/ajax_update_media.php [L]
+    RewriteRule ^panel/ajax/rename-media/?$ admin/ajax_rename_media.php [L]
+    RewriteRule ^panel/ajax/upload-media/?$ admin/ajax_upload_media.php [L]
+
+    #Regla para activar producto
+    RewriteRule ^panel/producto/activar/?$ admin/activar_producto.php [L]
+
+    #Regla para desactivar producto
+    RewriteRule ^panel/producto/desactivar/?$ admin/desactivar_producto.php [L]
+
+    #Regla para eliminar producto
+    RewriteRule ^panel/producto/eliminar/?$ admin/eliminar_producto.php [L]
+
+    # Regla para enviar un mensaje desde el panel
+    RewriteRule ^panel/enviar-mensaje/?$ admin/enviar_mensaje_admin.php [L]
+
+    # Regla para la gestión masiva de productos
+    RewriteRule ^panel/productos-masivos/?$ admin/productos_masivos.php [L,QSA]
+
+    #Regla para verificar sku
+    RewriteRule ^panel/ajax/check-sku/?$ admin/ajax_check_sku.php [L,QSA]
+
+    #Regla para añadir categorias
+    RewriteRule ^panel/ajax/add-category/?$ admin/ajax_add_category.php [L]
+
+    #Regla para enviar preguntas
+    RewriteRule ^guardar-pregunta/?$ guardar_pregunta.php [L]
+    RewriteRule ^accion/guardar-resena/?$ guardar_resena.php [L]
+    # Regla para las acciones de las reseñas (aprobar, rechazar, eliminar)
+    RewriteRule ^panel/resena/([a-z]+)/([0-9]+)/?$ admin/actualizar_resena.php?accion=$1&id=$2 [L,QSA]
+    # Regla para los DETALLES del pedido (más específica, va primero) # Ej: /panel/pedido/57
+    RewriteRule ^panel/pedido/([0-9]+)/?$ admin/detalle_pedido.php?id=$1 [L,QSA]
+
+    # Regla para el panel de administración
+    RewriteRule ^panel/([a-zA-Z0-9_]+)/?$ admin/$1.php [L]
+
+    # Regla para la PÁGINA PRINCIPAL del panel (ej. /panel)
+    RewriteRule ^panel/?$ admin/panel_admin.php [L]
+
+    # Regla para Mensajes
+    RewriteRule ^pedido/mensajes/([0-9]+)/?$ mensajes_pedido.php?pedido_id=$1 [L,QSA]
+
+    # Regla para generar factura
+    RewriteRule ^factura/([0-9]+)/?$ generar_factura.php?pedido_id=$1 [L]
+
+    # Regla para el script que envía el mensaje
+    RewriteRule ^pedido/enviar-mensaje/?$ enviar_mensaje.php [L]
+
+    # Regla para EDITAR un producto (ej. /panel/producto/editar/17)
+    RewriteRule ^panel/producto/editar/([0-9]+)/?$ admin/formulario_producto.php?id=$1 [L,QSA]
+
+    # Regla para el script del ajax que envía el mensaje
+    RewriteRule ^ajax/nuevos-mensajes/?$ ajax_get_nuevos_mensajes.php [L,QSA]
+
+    # Regla para marcar notificacion leida
+    RewriteRule ^notificaciones/marcar-leida/?$ ajax_marcar_notificacion_leida.php [L]
+
+    # Regla para eliminar notificacion
+    RewriteRule ^notificaciones/eliminar/?$ ajax_eliminar_notificacion.php [L]
+
+    # Regla para el AJAX que busca las notificaciones
+    RewriteRule ^ajax/get-notificaciones/?$ ajax_get_notificaciones.php [L,QSA]
+
+    # Regla para gestionar clientes
+    RewriteRule ^panel/pedidos/cliente/([0-9]+)/?$ admin/ver_pedidos.php?cliente_id=$1 [L,QSA]
+
+    # Regla para añadir/quitar de la wishlist
+    RewriteRule ^toggle-wishlist/?$ toggle_wishlist.php [L]
+
+    # --- REGLA MÁS GENERAL AL FINAL ---
+
+    # 4. Regla para quitar .php de otras páginas (Ej: /contacto, /perfil)
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^([^/.]+)$ $1.php [L,NC]
+
+</IfModule>
+
+ErrorDocument 404 /404.php

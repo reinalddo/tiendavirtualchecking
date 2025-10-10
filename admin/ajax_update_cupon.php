@@ -1,7 +1,7 @@
 <?php
 // admin/ajax_update_cupon.php
-session_start();
-require_once '../includes/db_connection.php';
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 // Verificación de seguridad
 if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin' || $_SERVER['REQUEST_METHOD'] !== 'POST') {

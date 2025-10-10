@@ -2,7 +2,7 @@
 // ajax_get_nuevos_mensajes.php
 //session_start();
 require_once 'includes/config.php';
-require_once 'includes/db_connection.php';
+//require_once 'includes/db_connection.php';
 
 header('Content-Type: application/json');
 

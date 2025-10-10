@@ -1,13 +1,7 @@
 <?php
 // admin/gestionar_productos.php
-require_once '../includes/header.php';
-require_once '../includes/db_connection.php';
-
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: /login.php');
-    exit();
-}
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 // Obtener todos los productos para listarlos
 $stmt = $pdo->query("SELECT p.*, 
@@ -25,7 +19,7 @@ $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="container-fluid py-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h1 class="h2">Gestionar Productos</h1>
-            <a href="formulario_producto.php" class="btn btn-primary">
+            <a href="panel/producto/nuevo" class="btn btn-primary">
                 <i class="bi bi-plus-circle me-2"></i>Añadir Nuevo Producto
             </a>
         </div>
@@ -71,22 +65,22 @@ $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <?php endif; ?>
                                 </td>
                                 <td class="text-end">
-                                    <a href="formulario_producto.php?id=<?php echo $producto['id']; ?>" class="btn btn-sm btn-secondary">Editar</a>
+                                    <a href="panel/producto/editar/<?php echo $producto['id']; ?>" class="btn btn-sm btn-secondary">Editar</a>
                                     
                                     <?php if ($producto['es_activo']): ?>
-                                        <form action="desactivar_producto.php" method="POST" class="d-inline ms-1">
+                                        <form action="panel/producto/desactivar" method="POST" class="d-inline ms-1">
                                             <input type="hidden" name="producto_id" value="<?php echo $producto['id']; ?>">
                                             <button type="submit" class="btn btn-sm btn-warning">Desactivar</button>
                                         </form>
                                     <?php else: ?>
-                                        <form action="activar_producto.php" method="POST" class="d-inline ms-1">
+                                        <form action="panel/producto/activar" method="POST" class="d-inline ms-1">
                                             <input type="hidden" name="producto_id" value="<?php echo $producto['id']; ?>">
                                             <button type="submit" class="btn btn-sm btn-success">Activar</button>
                                         </form>
                                     <?php endif; ?>
 
                                     <?php if ($producto['total_ventas'] == 0): ?>
-                                        <form action="eliminar_producto.php" method="POST" class="d-inline ms-1">
+                                        <form action="panel/producto/eliminar" method="POST" class="d-inline ms-1">
                                             <input type="hidden" name="producto_id" value="<?php echo $producto['id']; ?>">
                                             <button type="submit" class="btn btn-sm btn-danger confirm-delete">Eliminar</button>
                                         </form>

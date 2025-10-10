@@ -2,8 +2,18 @@
 // google-login.php
 require_once 'includes/config.php';
 
-// Crear cliente de Google
+// 1. Definimos la ruta COMPLETA al archivo de certificados en tu proyecto.
+$caBundlePath = __DIR__ . '/vendor/google/auth/src/cacert.pem';
+
+// 2. Creamos un cliente HTTP y le forzamos a usar nuestro archivo de certificados.
+$httpClient = new \GuzzleHttp\Client([
+    'verify' => $caBundlePath,
+]);
+
+// 3. Pasamos este cliente configurado a la librería de Google.
 $client = new Google\Client();
+$client->setHttpClient($httpClient);
+
 $client->setClientId(GOOGLE_CLIENT_ID);
 $client->setClientSecret(GOOGLE_CLIENT_SECRET);
 $client->setRedirectUri(GOOGLE_REDIRECT_URL);

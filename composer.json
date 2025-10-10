@@ -4,6 +4,6 @@
         "google/apiclient": "^2.0",
         "tecnickcom/tcpdf": "^6.10",
         "phpoffice/phpspreadsheet": "^1.12",
-        "openpayu/openpayu": "^2.3"
+        "phpmailer/phpmailer": "^6.10"
     }
 }

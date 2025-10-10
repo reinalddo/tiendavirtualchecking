@@ -1,9 +1,8 @@
 <?php
+ini_set('memory_limit', '512M');
 // admin/procesar_catalogo.php
-session_start();
-require_once '../includes/config.php'; // Para BASE_URL y autoloader de Composer
-require_once '../includes/db_connection.php';
-require_once '../includes/helpers.php'; // Para la función format_price()
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 // Verificación de seguridad de admin
 if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {

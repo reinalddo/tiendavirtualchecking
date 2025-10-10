@@ -4,7 +4,16 @@
 require_once 'includes/config.php';
 require_once 'includes/db_connection.php';
 
-// ... (Verificaciones de seguridad) ...
+// Verificaciones de seguridad
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' 
+    || !isset($_SESSION['usuario_id']) 
+    || empty($_POST['conversacion_id'])
+    || empty($_POST['pedido_id'])) {
+    
+    header('Location: ' . BASE_URL);
+    exit();
+}
+
 $conversacion_id = (int)$_POST['conversacion_id'];
 $pedido_id = (int)$_POST['pedido_id'];
 $remitente_id = $_SESSION['usuario_id'];
@@ -32,6 +41,6 @@ if (!empty($mensaje) || $archivo_adjunto_nombre) {
     $stmt_insert->execute([$conversacion_id, $remitente_id, $mensaje, $archivo_adjunto_nombre, $nombre_original]);
 }
 
-header('Location: ' . BASE_URL . 'mensajes_pedido.php?pedido_id=' . $pedido_id);
+header('Location: ' . BASE_URL . 'pedido/mensajes/' . $pedido_id);
 exit();
 ?>

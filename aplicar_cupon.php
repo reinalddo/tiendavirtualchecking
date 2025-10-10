@@ -5,7 +5,7 @@ require_once 'includes/config.php';
 require_once 'includes/db_connection.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || empty($_POST['codigo_cupon'])) {
-    header('Location: ' . BASE_URL . 'ver_carrito.php');
+    header('Location: ' . BASE_URL . 'carrito');
     exit();
 }
 
@@ -68,6 +68,6 @@ if ($error_mensaje) {
     $_SESSION['mensaje_carrito'] = '¡Cupón aplicado exitosamente!';
 }
 
-header('Location: ' . BASE_URL . 'ver_carrito.php');
+header('Location: ' . BASE_URL . 'carrito');
 exit();
 ?>

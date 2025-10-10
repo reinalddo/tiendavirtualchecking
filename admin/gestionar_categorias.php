@@ -1,23 +1,22 @@
 <?php
 // admin/gestionar_categorias.php
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
-//session_start();
-
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: ' . BASE_URL . 'login.php'); exit();
-}
+verificar_sesion_admin();
 
 // Lógica para AÑADIR/ELIMINAR
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['add_categoria'])) {
         $nombre = trim($_POST['nombre']);
         $codigo = trim($_POST['codigo']);
+
+        require_once '../includes/helpers.php'; // Aseguramos que la función esté disponible
+        $slug = generar_slug($nombre);
+
         $mostrar_en_inicio = isset($_POST['mostrar_en_inicio']) ? 1 : 0;
         if (!empty($nombre) && !empty($codigo)) {
             try {
-                $stmt = $pdo->prepare("INSERT INTO categorias (nombre, codigo, mostrar_en_inicio) VALUES (?, ?, ?)");
-                $stmt->execute([$nombre, $codigo, $mostrar_en_inicio]);
+                $stmt = $pdo->prepare("INSERT INTO categorias (nombre, slug, codigo, mostrar_en_inicio) VALUES (?, ?, ?, ?)");
+                $stmt->execute([$nombre, $slug, $codigo, $mostrar_en_inicio]);
                 $_SESSION['mensaje_carrito'] = 'Categoría añadida exitosamente.';
             } catch (PDOException $e) {
                 if ($e->getCode() == 23000) { // Error de entrada duplicada
@@ -34,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$id]);
         $_SESSION['mensaje_carrito'] = 'Categoría eliminada.';
     }
-    header("Location: gestionar_categorias.php");
+    header("Location: " . BASE_URL . "panel/gestionar-categorias");
     exit();
 }
 
@@ -57,7 +56,7 @@ require_once '../includes/header.php';
                 <div class="card shadow-sm">
                     <div class="card-header"><h5 class="my-0 fw-normal">Añadir Nueva Categoría</h5></div>
                     <div class="card-body">
-                        <form action="gestionar_categorias.php" method="POST">
+                        <form action="panel/gestionar-categorias" method="POST">
                             <div class="mb-3">
                                 <label for="nombre" class="form-label">Nombre de la Categoría:</label>
                                 <input type="text" id="nombre" name="nombre" class="form-control" required>
@@ -100,7 +99,7 @@ require_once '../includes/header.php';
                                         <td><div class="form-check form-switch d-flex justify-content-center"><input class="form-check-input update-categoria" type="checkbox" name="mostrar_en_inicio" <?php echo $categoria['mostrar_en_inicio'] ? 'checked' : ''; ?>></div></td>
                                         <td><span class="badge bg-secondary"><?php echo $categoria['total_productos']; ?></span></td>
                                         <td class="text-end">
-                                            <form action="gestionar_categorias.php" method="POST" class="d-inline">
+                                            <form action="panel/gestionar-categorias" method="POST" class="d-inline">
                                                 <input type="hidden" name="categoria_id" value="<?php echo $categoria['id']; ?>">
                                                 <button type="submit" name="delete_categoria" class="btn btn-sm btn-danger confirm-delete" <?php if ($categoria['total_productos'] > 0) echo 'disabled'; ?>>Eliminar</button>
                                             </form>

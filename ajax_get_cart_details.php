@@ -1,8 +1,8 @@
 <?php
 // ajax_get_cart_details.php
-session_start();
+//session_start();
 require_once 'includes/config.php';
-require_once 'includes/db_connection.php';
+//require_once 'includes/db_connection.php';
 require_once 'includes/helpers.php'; // Necesario para la función format_price()
 
 $carrito = $_SESSION['carrito'] ?? [];

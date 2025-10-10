@@ -1,7 +1,7 @@
 <?php
 // admin/ajax_guardar_descripcion.php
-require_once '../includes/db_connection.php';
-session_start();
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 // Verificar si el usuario es administrador (debes implementar tu lógica de autenticación)
 if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {

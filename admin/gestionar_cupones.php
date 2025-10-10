@@ -1,14 +1,7 @@
 <?php
 // admin/gestionar_cupones.php
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
-//session_start();
-
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit();
-}
+verificar_sesion_admin();
 
 // Lógica para AÑADIR/ELIMINAR
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -27,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("DELETE FROM cupones WHERE id = ?");
         $stmt->execute([$cupon_id]);
     }
-    header("Location: gestionar_cupones.php");
+    header("Location: " . BASE_URL . "panel/gestionar-cupones");
     exit();
 }
 
@@ -44,10 +37,10 @@ require_once '../includes/header.php';
                 <div class="card shadow-sm">
                     <div class="card-header"><h5 class="my-0 fw-normal">Añadir Nuevo Cupón</h5></div>
                     <div class="card-body">
-                        <form action="gestionar_cupones.php" method="POST">
+                        <form action="panel/gestionar-cupones" method="POST">
                             <div class="mb-3">
                                 <label for="codigo" class="form-label">Código del Cupón:</label>
-                                <input type="text" id="codigo" name="codigo" class="form-control" required placeholder="Ej: VERANO15">
+                                <input type="text" id="codigo" name="codigo" class="form-control" required placeholder="Ej: CUPON15">
                             </div>
                             <div class="mb-3">
                                 <label for="tipo_descuento" class="form-label">Tipo de Descuento:</label>
@@ -116,7 +109,7 @@ require_once '../includes/header.php';
                                         </td>
                                         <td><input type="checkbox" class="form-check-input update-cupon" name="es_activo" <?php echo $cupon['es_activo'] ? 'checked' : ''; ?>></td>
                                         <td class="text-end">
-                                            <form action="gestionar_cupones.php" method="POST" class="d-inline">
+                                            <form action="panel/gestionar-cupones" method="POST" class="d-inline">
                                                 <input type="hidden" name="cupon_id" value="<?php echo $cupon['id']; ?>">
                                                 <button type="submit" name="delete_cupon" class="btn btn-sm btn-danger confirm-delete">Eliminar</button>
                                             </form>

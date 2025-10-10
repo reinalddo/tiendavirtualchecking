@@ -17,6 +17,46 @@ $rif_cedula = trim($_POST['rif_cedula']);
 $direccion = trim($_POST['direccion']);
 $avatar_path = null;
 
+try {
+    // --- LÓGICA PARA CAMBIAR CONTRASEÑA (VERSIÓN SEGURA Y COMPLETA) ---
+    $password_nueva = $_POST['password_nueva'];
+
+    // Solo intentamos cambiar la contraseña si el campo "Contraseña Nueva" no está vacío
+    if (!empty($password_nueva)) {
+        $password_actual = $_POST['password_actual'];
+        $password_confirm = $_POST['password_confirm'];
+
+        // 1. Validar que todos los campos necesarios estén llenos
+        if (empty($password_actual) || empty($password_confirm)) {
+            throw new Exception("Debes llenar todos los campos de contraseña para cambiarla.");
+        }
+        
+        // 2. Validar que la contraseña actual sea correcta
+        $stmt_user = $pdo->prepare("SELECT password FROM usuarios WHERE id = ?");
+        $stmt_user->execute([$usuario_id]);
+        $hash_actual = $stmt_user->fetchColumn();
+
+        if (!$hash_actual || !password_verify($password_actual, $hash_actual)) {
+            throw new Exception("La contraseña actual es incorrecta.");
+        }
+
+        // 3. Validar que la nueva contraseña y su confirmación coincidan
+        if ($password_nueva !== $password_confirm) {
+            throw new Exception("Las contraseñas nuevas no coinciden.");
+        }
+
+        // 4. Validar la complejidad de la nueva contraseña
+        if (strlen($password_nueva) < 8 || !preg_match('/[A-Z]/', $password_nueva) || !preg_match('/[0-9]/', $password_nueva)) {
+            throw new Exception("La nueva contraseña debe tener al menos 8 caracteres, una mayúscula y un número.");
+        }
+        
+        // Si todo es correcto, hasheamos y guardamos la nueva contraseña
+        $hashed_password = password_hash($password_nueva, PASSWORD_DEFAULT);
+        $stmt_update_pass = $pdo->prepare("UPDATE usuarios SET password = ? WHERE id = ?");
+        $stmt_update_pass->execute([$hashed_password, $usuario_id]);
+    }
+    // --- FIN LÓGICA DE CONTRASEÑA ---
+
 // Subir nuevo avatar si se proporciona
 if (isset($_FILES['avatar']) && $_FILES['avatar']['error'] === UPLOAD_ERR_OK) {
     $upload_dir = 'uploads/avatars/';
@@ -63,7 +103,10 @@ if ($avatar_path !== null) {
 }
 
 $_SESSION['mensaje_carrito'] = '¡Tu perfil ha sido actualizado!';
+} catch (Exception $e) {
+    $_SESSION['mensaje_carrito'] = 'Error: ' . $e->getMessage();
+}
 
-header('Location: ' . BASE_URL . 'editar_perfil.php');
+header('Location: ' . BASE_URL . 'editar-perfil');
 exit();
 ?>

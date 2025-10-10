@@ -892,3 +892,51 @@ h3 { font-size: 1.75rem; }
 .testimonial-rating {
     color: #ffc107; /* Color de las estrellas (amarillo) */
 }
+
+/* --- Estilos para Iconos de Redes Sociales en Contacto --- */
+.contact-social-icons a {
+    text-decoration: none;
+    transition: opacity 0.3s ease;
+}
+
+.contact-social-icons a:hover {
+    opacity: 0.8;
+}
+
+.contact-social-icons .bi-facebook { color: #1877F2; }
+.contact-social-icons .bi-instagram { color: #E4405F; }
+.contact-social-icons .bi-twitter-x { color: #000000; }
+.contact-social-icons .bi-tiktok { color: #000000; }
+.contact-social-icons .bi-youtube { color: #FF0000; }
+
+/* --- Estilos para Botón Flotante de WhatsApp --- */
+.whatsapp-float {
+    position: fixed;
+    width: 60px;
+    height: 60px;
+    bottom: 40px;
+    right: 40px;
+    background-color: #25d366;
+    color: #FFF;
+    border-radius: 50px;
+    /* Usamos flexbox para centrar el icono */
+    display: flex; /* Convierte el contenedor en un contenedor flex */
+    justify-content: center; /* Centra horizontalmente */
+    align-items: center;   /* Centra verticalmente */
+    
+    font-size: 30px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.25);
+    z-index: 1000;
+    transition: transform 0.2s ease-in-out;
+    text-decoration: none; /* Asegura que no haya subrayado */
+}
+
+.whatsapp-float:hover {
+    transform: scale(1.1);
+    color: #FFF;
+}
+
+html {
+    overflow-y: scroll;
+}
+

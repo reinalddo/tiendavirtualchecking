@@ -5,7 +5,7 @@ require_once 'includes/db_connection.php';
 
 // Seguridad: Solo usuarios logueados
 if (!isset($_SESSION['usuario_id'])) {
-    header('Location: ' . BASE_URL . 'login.php');
+    header('Location: ' . BASE_URL . 'login');
     exit();
 }
 $usuario_id = $_SESSION['usuario_id'];
@@ -28,7 +28,7 @@ require_once 'includes/header.php';
                         <h2 class="my-0 fw-normal fs-4">Editar Mi Perfil</h2>
                     </div>
                     <div class="card-body">
-                        <form action="actualizar_perfil.php" method="POST" enctype="multipart/form-data">
+                        <form action="datos/actualizar" method="POST" enctype="multipart/form-data">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="nombre_pila" class="form-label">Nombre:</label>
@@ -44,6 +44,43 @@ require_once 'includes/header.php';
                                 <input type="email" name="email" class="form-control" value="<?php echo htmlspecialchars($usuario['email'] ?? ''); ?>" disabled>
                                 <small class="form-text text-muted">El email no se puede cambiar.</small>
                             </div>
+
+                            <hr>
+                            <h5 class="mt-4">Cambiar Contraseña</h5>
+
+                            <?php 
+                            // Verificamos si el usuario tiene una contraseña local. 
+                            // Los usuarios de Google tienen el campo 'password' vacío.
+                            if (!empty($usuario['password'])): 
+                            ?>
+                                <p class="text-muted"><small>Deja estos campos en blanco si no deseas cambiar tu contraseña.</small></p>
+
+                                <div class="mb-3 position-relative">
+                                    <label for="password_actual" class="form-label">Contraseña Actual:</label>
+                                    <input type="password" name="password_actual" id="password_actual" class="form-control">
+                                    <i class="bi bi-eye-slash-fill toggle-password" style="cursor: pointer; position: absolute; right: 10px; top: 38px; transform: translateY(0);"></i>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3 position-relative">
+                                        <label for="password_nueva" class="form-label">Contraseña Nueva:</label>
+                                        <input type="password" name="password_nueva" id="password_nueva" class="form-control">
+                                        <i class="bi bi-eye-slash-fill toggle-password" style="cursor: pointer; position: absolute; right: 18px; top: 38px; transform: translateY(0);"></i>
+                                        <div id="password-feedback" class="form-text"></div>
+                                    </div>
+                                    <div class="col-md-6 mb-3 position-relative">
+                                        <label for="password_confirm" class="form-label">Confirmar Contraseña Nueva:</label>
+                                        <input type="password" name="password_confirm" id="password_confirm" class="form-control">
+                                        <i class="bi bi-eye-slash-fill toggle-password" style="cursor: pointer; position: absolute; right: 18px; top: 38px; transform: translateY(0);"></i>
+                                        <div id="password-confirm-feedback" class="form-text"></div>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div class="alert alert-info">
+                                    Iniciaste sesión con Google, por lo que no necesitas gestionar una contraseña aquí.
+                                </div>
+                            <?php endif; ?>
+                            <hr>
+
                             <div class="mb-3">
                                 <label for="telefono" class="form-label">Teléfono:</label>
                                 <input type="tel" name="telefono" class="form-control" value="<?php echo htmlspecialchars($usuario['telefono'] ?? ''); ?>">
@@ -84,5 +121,7 @@ require_once 'includes/header.php';
         </div>
     </div>
 </main>
+<script src="js/main.js"></script>
+<script src="js/perfil-validation.js"></script>
 
 <?php require_once 'includes/footer.php'; ?>

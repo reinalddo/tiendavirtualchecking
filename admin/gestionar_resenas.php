@@ -1,13 +1,7 @@
 <?php
 // admin/gestionar_resenas.php
-require_once '../includes/header.php';
-require_once '../includes/db_connection.php';
-
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin') {
-    header('Location: /login.php');
-    exit();
-}
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 // Obtener todas las reseñas
 $resenas = $pdo->query("SELECT r.*, p.nombre as nombre_producto, u.nombre_pila as nombre_usuario 
@@ -55,11 +49,11 @@ require_once '../includes/header.php';
                                     </td>
                                     <td class="text-end">
                                         <?php if (!$resena['es_aprobada']): ?>
-                                            <a href="actualizar_resena.php?id=<?php echo $resena['id']; ?>&accion=aprobar" class="btn btn-sm btn-success">Aprobar</a>
+                                            <a href="panel/resena/aprobar/<?php echo $resena['id']; ?>" class="btn btn-sm btn-success">Aprobar</a>
                                         <?php else: ?>
-                                            <a href="actualizar_resena.php?id=<?php echo $resena['id']; ?>&accion=rechazar" class="btn btn-sm btn-warning">Rechazar</a>
+                                            <a href="panel/resena/rechazar/<?php echo $resena['id']; ?>" class="btn btn-sm btn-warning">Rechazar</a>
                                         <?php endif; ?>
-                                        <a href="actualizar_resena.php?id=<?php echo $resena['id']; ?>&accion=eliminar" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro?');">Eliminar</a>
+                                        <a href="panel/resena/eliminar/<?php echo $resena['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro?');">Eliminar</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

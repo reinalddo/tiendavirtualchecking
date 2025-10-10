@@ -76,36 +76,39 @@ require_once 'includes/header.php';
                                                         $status_class = 'bg-secondary';
                                                 }
                                             ?>
-                                        <tr>
+                                        <tr id="pedido-<?php echo $pedido['id']; ?>">
                                             <td><strong>#<?php echo htmlspecialchars($pedido['id']); ?></strong></td>
                                             <td><?php echo htmlspecialchars($pedido['fecha_pedido']); ?></td>
-                                            <td><?php echo format_price($pedido['total']); ?></td>
+                                            <td><?php echo format_historical_price($pedido['total'], $pedido, $pdo); ?></td>
                                             <td>
                                                 <span class="badge <?php echo $status_class; ?>">
                                                     <?php echo htmlspecialchars($pedido['estado']); ?>
                                                 </span>
                                             </td>
                                             <td class="text-end">
-                                                <?php if (trim(strtolower($pedido['estado'])) == 'pendiente de pago'): ?>
+                                                <?php 
+                                                if (trim(strtolower($pedido['estado'])) == 'pendiente de pago' || $pedido['estado_comprobante'] == 'rechazado'): 
+                                                ?>
                                                     
-                                                    <?php if ($pedido['tiene_comprobante'] && $pedido['estado_comprobante'] != 'rechazado'): ?>
+                                                    <?php if ($pedido['tiene_comprobante'] && $pedido['estado_comprobante'] == 'pendiente'): ?>
                                                         <span class="badge bg-info text-dark">Comprobante en revisión</span>
                                                     <?php else: ?>
                                                         <?php if ($pedido['estado_comprobante'] == 'rechazado'): ?>
-                                                            <p class="text-danger small">Tu comprobante anterior fue rechazado. Por favor, sube uno nuevo.</p>
+                                                            <p class="text-danger small mb-1">Tu comprobante anterior fue rechazado. Por favor, sube uno nuevo.</p>
                                                         <?php endif; ?>
-                                                        <form action="subir_comprobante.php" method="POST" enctype="multipart/form-data" class="d-inline-flex">
+                                                        <form action="perfil/subir-comprobante" method="POST" enctype="multipart/form-data" class="d-inline-flex">
                                                             <input type="hidden" name="pedido_id" value="<?php echo $pedido['id']; ?>">
                                                             <input type="file" name="comprobante" class="form-control form-control-sm" required>
                                                             <button type="submit" class="btn btn-sm btn-success ms-2">Subir</button>
                                                         </form>
                                                     <?php endif; ?>
 
-                                                <?php else: ?>
-                                                    <a href="generar_factura.php?pedido_id=<?php echo $pedido['id']; ?>" target="_blank" class="btn btn-sm btn-outline-primary">Factura</a>
+                                                <?php else: // Si el pedido está Pagado, Enviado, etc. ?>
+                                                    <a href="factura/<?php echo $pedido['id']; ?>" target="_blank" class="btn btn-sm btn-outline-primary">Factura</a>
                                                 <?php endif; ?>
+
                                                 <button class="btn btn-sm btn-secondary view-order-details-btn ms-2" data-pedido-id="<?php echo $pedido['id']; ?>">Ver Detalles</button>
-                                                <a href="mensajes_pedido.php?pedido_id=<?php echo $pedido['id']; ?>" class="btn btn-sm btn-info text-white ms-2">Mensajes</a>
+                                                <a href="pedido/mensajes/<?php echo $pedido['id']; ?>" class="btn btn-sm btn-info text-white ms-2">Mensajes</a>
                                             </td>
                                         </tr>
                                         <?php endforeach; ?>

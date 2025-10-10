@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += `<div class="mt-3">
                                 <p class="text-end fw-bold">Total: ${data.total_formateado}</p>
                                 <div class="d-grid gap-2">
-                                    <a href="${BASE_URL}ver_carrito.php" class="btn btn-primary btn-sm">Ver Carrito Completo</a>
+                                    <a href="carrito" class="btn btn-primary btn-sm">Ver Carrito Completo</a>
                                  </div>
                              </div>`;
                 } else {
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('producto_id', productoId);
             formData.append('eliminar_del_carrito', '1');
 
-            fetch(BASE_URL + 'carrito_acciones.php', {
+            fetch(BASE_URL + 'carrito-acciones', {
                 method: 'POST',
                 body: new URLSearchParams(formData)
             })

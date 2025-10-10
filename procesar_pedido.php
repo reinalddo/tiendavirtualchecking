@@ -15,7 +15,7 @@ foreach ($config_list as $setting) {
 
 // 2. VERIFICACIONES DE SEGURIDAD
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_SESSION['usuario_id']) || empty($_SESSION['carrito'])) {
-    header('Location: ' . BASE_URL . 'index.php');
+    header('Location: ' . BASE_URL );
     exit();
 }
 
@@ -47,18 +47,20 @@ try {
                          : $producto['precio_usd'];
         $subtotal_usd += $precio_a_usar * $cantidad;
     }
+
     $descuento_usd = 0;
     $cupon_aplicado = $_SESSION['cupon'] ?? null;
     $codigo_cupon_usado = $cupon_aplicado ? $cupon_aplicado['codigo'] : null;
     if ($cupon_aplicado) {
         if ($cupon_aplicado['tipo_descuento'] == 'porcentaje') {
-            $descuento_usd = ($subtotal_con_iva_usd * $cupon_aplicado['valor']) / 100;
+            // CORRECCIÓN 1: Usar la variable correcta $subtotal_usd
+            $descuento_usd = ($subtotal_usd * $cupon_aplicado['valor']) / 100;
         } else {
             $descuento_usd = $cupon_aplicado['valor'];
         }
     }
-    $total_final_usd = $subtotal_usd;
-
+    // CORRECCIÓN 2: Restar el descuento calculado al total final
+    $total_final_usd = $subtotal_usd - $descuento_usd;
     // --- 5. MANEJAR LA PASARELA DE PAGO ---
     switch ($metodo_pago) {
         case 'manual':
@@ -124,12 +126,19 @@ try {
             throw new Exception("Por favor, selecciona un método de pago.");
     }
 
+    // OBTENEMOS LOS DATOS DE LA MONEDA DE LA SESIÓN
+    $moneda_info = $_SESSION['moneda'] ?? ['codigo' => 'USD', 'tasa_conversion' => 1.0];
+    $moneda_pedido = $moneda_info['codigo'];
+    $tasa_conversion_pedido = $moneda_info['tasa_conversion'];
+    
     // --- 6. GUARDAR PEDIDO (SOLO PARA STRIPE Y MANUAL) ---
-    // Mercado Pago ya guardó su pedido y redirigió, por lo que no llegará a esta parte.
     $pdo->beginTransaction();
-    $sql_pedido = "INSERT INTO pedidos (usuario_id, direccion_envio, total, estado, metodo_pago) VALUES (?, ?, ?, ?, ?)";
+    $sql_pedido = "INSERT INTO pedidos (usuario_id, direccion_envio, total, estado, metodo_pago, cupon_usado, moneda_pedido, tasa_conversion_pedido) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     $stmt_pedido = $pdo->prepare($sql_pedido);
-    $stmt_pedido->execute([$usuario_id, $direccion_envio, $total_final_usd, $estado_pedido, $metodo_pago]);
+    
+    // AÑADIMOS LAS NUEVAS VARIABLES A LA EJECUCIÓN
+    $stmt_pedido->execute([$usuario_id, $direccion_envio, $total_final_usd, $estado_pedido, $metodo_pago, $codigo_cupon_usado, $moneda_pedido, $tasa_conversion_pedido]);
+    
     $pedido_id = $pdo->lastInsertId();
     
     $sql_conversacion = "INSERT INTO conversaciones (pedido_id, cliente_id) VALUES (?, ?)";
@@ -157,23 +166,58 @@ try {
     // --- GENERAR NOTIFICACIONES ---
     $admins_ids = obtener_admins($pdo);
     $mensaje_admin = "Nuevo pedido #" . $pedido_id . " recibido.";
-    $url_admin = BASE_URL . "admin/detalle_pedido.php?id=" . $pedido_id;
+    $url_admin = BASE_URL . "panel/pedido/" . $pedido_id;
 
     foreach ($admins_ids as $admin_id) {
         crear_notificacion($pdo, $admin_id, $mensaje_admin, $url_admin);
     }
     // --- FIN NOTIFICACIONES ---
 
+    // --- NUEVO: ENVIAR NOTIFICACIONES POR CORREO ELECTRÓNICO ---
+
+    // 1. Correo para el Administrador
+    if (!empty($config['email_contacto'])) {
+        $asunto_admin = "¡Nuevo Pedido Recibido! - #" . $pedido_id;
+        $mensaje_admin_email = "<p>Has recibido un nuevo pedido en tu tienda con el número <strong>#" . $pedido_id . "</strong>.</p><p>Por favor, ingresa al panel de administración para ver los detalles y procesarlo.</p>";
+        $url_admin_email = ABSOLUTE_URL . "panel/pedido/" . $pedido_id;
+        
+        // Pasamos el array $config a la función
+        $cuerpo_email_admin = generar_plantilla_email("Nuevo Pedido Recibido", $mensaje_admin_email, "Ver Pedido", $url_admin_email, $config);
+        enviar_email($pdo, $config['email_contacto'], 'Administrador', $asunto_admin, $cuerpo_email_admin, $config);
+    }
+
+    // 2. Correo para el Cliente
+    $stmt_cliente = $pdo->prepare("SELECT nombre_pila, email FROM usuarios WHERE id = ?");
+    $stmt_cliente->execute([$usuario_id]);
+    $cliente = $stmt_cliente->fetch(PDO::FETCH_ASSOC);
+
+    if ($cliente) {
+        $asunto_cliente = "Confirmación de tu Pedido en Mi Tienda Web - #" . $pedido_id;
+        $mensaje_cliente_email = "<p>¡Gracias por tu compra! Hemos recibido tu pedido con el número <strong>#" . $pedido_id . "</strong> y ya lo estamos procesando.</p>";
+        
+        if ($metodo_pago == 'manual') {
+            $mensaje_cliente_email .= "<p><strong>Siguientes pasos:</strong> Has elegido el método de pago manual. Por favor, realiza la transferencia o pago móvil y sube el comprobante desde la sección 'Mis Pedidos' en tu perfil para que podamos validar tu pago.</p>";
+        }
+        
+        // --- CAMBIO 4: URL directa al pedido en el perfil ---
+        $url_cliente_email = ABSOLUTE_URL . "perfil.php#pedido-" . $pedido_id;
+        
+        // Pasamos el array $config a la función
+        $cuerpo_email_cliente = generar_plantilla_email("¡Hemos recibido tu pedido!", $mensaje_cliente_email, "Ver Mis Pedidos", $url_cliente_email, $config);
+        enviar_email($pdo, $cliente['email'], $cliente['nombre_pila'], $asunto_cliente, $cuerpo_email_cliente, $config);
+    }
+    // --- FIN DE ENVÍO DE CORREOS ---
+
     $pdo->commit();
 
     unset($_SESSION['carrito'], $_SESSION['cupon']);
-    header("Location: " . BASE_URL . "gracias.php?pedido_id=" . $pedido_id);
+    header("Location: " . BASE_URL . "gracias/" . $pedido_id);
     exit();
 
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
     $_SESSION['mensaje_carrito'] = "Error al procesar tu pedido: " . $e->getMessage();
-    header('Location: ' . BASE_URL . 'checkout.php');
+    header('Location: ' . BASE_URL . 'checkout');
     exit();
 }
 ?>

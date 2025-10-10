@@ -1,16 +1,15 @@
 <?php
 // admin/detalle_pedido.php (Versión Corregida)
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
-require_once '../includes/helpers.php'; // Se incluye para la notificación
-
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin' || !isset($_GET['id'])) {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit();
-}
+verificar_sesion_admin();
 
 $pedido_id = (int)$_GET['id'];
+
+$cliente_id_filtro = $_GET['cliente_id'] ?? null;
+$url_volver = 'panel/ver_pedidos'; // URL por defecto
+if ($cliente_id_filtro) {
+    $url_volver = 'panel/pedidos/cliente/' . $cliente_id_filtro;
+}
 
 // --- CORRECCIÓN: OBTENEMOS LOS DATOS DEL PEDIDO ANTES DE CUALQUIER OTRA ACCIÓN ---
 $stmt_pedido = $pdo->prepare("SELECT p.*, u.nombre_pila as nombre_cliente, u.email as email_cliente 
@@ -34,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actualizar_estado']))
     $url_cliente = BASE_URL . "perfil.php";
     crear_notificacion($pdo, $pedido['usuario_id'], $mensaje_cliente, $url_cliente);
 
-    header("Location: detalle_pedido.php?id=" . $pedido_id);
+    header("Location: ". BASE_URL ."panel/pedido/" . $pedido_id);
     exit();
 }
 
@@ -90,11 +89,11 @@ require_once '../includes/header.php';
                         <a href="<?php echo BASE_URL . 'comprobantes/' . htmlspecialchars($comprobante['url_comprobante'] ?? ''); ?>" target="_blank" class="btn btn-sm btn-outline-primary">Ver Comprobante</a>
                         
                         <?php if ($comprobante['estado'] !== 'aprobado'): ?>
-                            <a href="actualizar_comprobante.php?id=<?php echo $comprobante['id']; ?>&accion=aprobar&pedido_id=<?php echo $pedido_id; ?>" class="btn btn-sm btn-success">Aprobar</a>
+                            <a href="panel/comprobante/actualizar/<?php echo $comprobante['id']; ?>/aprobar/<?php echo $pedido_id; ?>" class="btn btn-sm btn-success">Aprobar</a>
                         <?php endif; ?>
                         
                         <?php if ($comprobante['estado'] !== 'rechazado'): ?>
-                            <a href="actualizar_comprobante.php?id=<?php echo $comprobante['id']; ?>&accion=rechazar&pedido_id=<?php echo $pedido_id; ?>" class="btn btn-sm btn-danger">Rechazar</a>
+                            <a href="panel/comprobante/actualizar/<?php echo $comprobante['id']; ?>/rechazar/<?php echo $pedido_id; ?>" class="btn btn-sm btn-danger">Rechazar</a>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -104,7 +103,7 @@ require_once '../includes/header.php';
                     <div class="card-header"><h5 class="my-0 fw-normal">Estado del Pedido</h5></div>
                     <div class="card-body">
                         <p><strong>Estado Actual:</strong> <span class="badge <?php echo $status_class; ?> fs-6"><?php echo htmlspecialchars($pedido['estado']); ?></span></p>
-                        <form action="detalle_pedido.php?id=<?php echo $pedido_id; ?>" method="POST" class="d-flex">
+                        <form action="<?php echo BASE_URL; ?>panel/pedido/<?php echo $pedido_id; ?>" method="POST" class="d-flex">
                             <select name="estado" class="form-select me-2">
                                 <option value="Pendiente de Pago" <?php if($pedido['estado'] == 'Pendiente de Pago') echo 'selected'; ?>>Pendiente de Pago</option>
                                 <option value="Pagado" <?php if($pedido['estado'] == 'Pagado') echo 'selected'; ?>>Pagado</option>
@@ -132,13 +131,18 @@ require_once '../includes/header.php';
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    <?php $subtotal_usd = 0; // Variable para calcular el subtotal en USD ?>
                                     <?php foreach ($detalles as $item): ?>
-                                    <tr>
-                                        <td><strong><?php echo htmlspecialchars($item['sku_producto']); ?></strong><br><?php echo htmlspecialchars($item['nombre_producto']); ?></td>
-                                        <td><?php echo htmlspecialchars($item['cantidad']); ?></td>
-                                        <td>$<?php echo htmlspecialchars(number_format($item['precio_unitario'], 2)); ?></td>
-                                        <td class="text-end">$<?php echo htmlspecialchars(number_format($item['cantidad'] * $item['precio_unitario'], 2)); ?></td>
-                                    </tr>
+                                            <?php 
+                                                $item_subtotal_usd = $item['cantidad'] * $item['precio_unitario'];
+                                                $subtotal_usd += $item_subtotal_usd;
+                                            ?>
+                                            <tr>
+                                                <td><strong><?php echo htmlspecialchars($item['sku_producto']); ?></strong><br><?php echo htmlspecialchars($item['nombre_producto']); ?></td>
+                                                <td><?php echo htmlspecialchars($item['cantidad']); ?></td>
+                                                <td><?php echo format_historical_price($item['precio_unitario'], $pedido, $pdo); ?></td>
+                                                <td class="text-end"><?php echo format_historical_price($item_subtotal_usd, $pedido, $pdo); ?></td>
+                                            </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                                 <tfoot>
@@ -153,21 +157,21 @@ require_once '../includes/header.php';
                                     ?>
                                     <tr>
                                         <td colspan="3" class="text-end">Subtotal:</td>
-                                        <td class="text-end"><?php echo htmlspecialchars($pedido['moneda_pedido'] . ' ' . number_format($subtotal_convertido, 2)); ?></td>
+                                        <td class="text-end"><?php echo format_historical_price($subtotal_usd, $pedido, $pdo); ?></td>
                                     </tr>
                                     <?php if (!empty($pedido['cupon_usado'])):
-                                        // El descuento es la diferencia entre el subtotal y el (Total - IVA)
-                                        $subtotal_con_descuento = $pedido['total'] - $pedido['iva_total'];
-                                        $monto_descuento = $subtotal_convertido - $subtotal_con_descuento;
+                                        // El total del pedido ya tiene el descuento aplicado
+                                        $subtotal_con_descuento_usd = $pedido['total'] - $pedido['iva_total'];
+                                        $monto_descuento_usd = $subtotal_usd - $subtotal_con_descuento_usd;
                                     ?>
                                     <tr>
                                         <td colspan="3" class="text-end"><strong>Descuento (<?php echo htmlspecialchars($pedido['cupon_usado']); ?>):</strong></td>
-                                        <td class="text-end text-success">- <?php echo htmlspecialchars($pedido['moneda_pedido'] . ' ' . number_format($monto_descuento, 2)); ?></td>
+                                        <td class="text-end text-success">- <?php echo format_historical_price($monto_descuento_usd, $pedido, $pdo); ?></td>
                                     </tr>
                                     <?php endif; ?>
                                     <tr class="fw-bold fs-5">
                                         <td colspan="3" class="text-end">Total del Pedido:</td>
-                                        <td class="text-end"><?php echo htmlspecialchars($pedido['moneda_pedido'] . ' ' . number_format($pedido['total'], 2)); ?></td>
+                                        <td class="text-end"><?php echo format_historical_price($pedido['total'], $pedido, $pdo); ?></td>
                                     </tr>
                                 </tfoot>
                             </table>
@@ -176,7 +180,7 @@ require_once '../includes/header.php';
                 </div>
             </div>
         </div>
-        <a href="ver_pedidos.php" class="btn btn-secondary mt-4">← Volver al listado de pedidos</a>
+        <a href="<?php echo $url_volver; ?>" class="btn btn-secondary mt-4">← Volver al listado de pedidos</a>
     </div>
 </main>
 

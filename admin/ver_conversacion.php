@@ -1,13 +1,8 @@
 <?php
 // admin/ver_conversacion.php (Versión Final Corregida)
 require_once '../includes/config.php';
-require_once '../includes/db_connection.php';
+verificar_sesion_admin();
 
-// Verificación de seguridad
-if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin' || !isset($_GET['id'])) {
-    header('Location: ' . BASE_URL . 'login.php');
-    exit();
-}
 
 $conversacion_id = (int)$_GET['id'];
 $admin_id = $_SESSION['usuario_id'];
@@ -77,7 +72,7 @@ require_once '../includes/header.php';
                 </div>
             </div>
             <div class="card-footer">
-                <form action="enviar_mensaje_admin.php" method="POST" id="chat-form-admin" enctype="multipart/form-data">
+                <form action="panel/enviar-mensaje" method="POST" id="chat-form-admin" enctype="multipart/form-data">
                     <input type="hidden" name="conversacion_id" value="<?php echo $conversacion_id; ?>">
                     <textarea name="mensaje" id="mensaje-textarea-admin" class="form-control mb-2" placeholder="Escribe tu respuesta..." rows="3"></textarea>
                     <div class="d-flex justify-content-between align-items-center">
@@ -92,7 +87,7 @@ require_once '../includes/header.php';
                 </form>
             </div>
         </div>
-        <a href="gestionar_mensajes.php" class="btn btn-secondary mt-3">← Volver a Conversaciones</a>
+        <a href="panel/gestionar_mensajes" class="btn btn-secondary mt-3">← Volver a Conversaciones</a>
     </div>
 </main>
 
@@ -127,11 +122,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     scrollToBottom();
 
+    let ultimoIdProcesado = <?php echo !empty($mensajes) ? $mensajes[0]['id'] : 0; ?>;
+
     function checkForNewMessages() {
         const ultimoMensaje = chatBox.lastElementChild;
         const ultimoId = ultimoMensaje ? ultimoMensaje.dataset.messageId : 0;
 
-        fetch(`${BASE_URL}ajax_get_nuevos_mensajes.php?conversacion_id=${conversacionId}&ultimo_id=${ultimoId}`)
+        //fetch(`${BASE_URL}ajax_get_nuevos_mensajes.php?conversacion_id=${conversacionId}&ultimo_id=${ultimoId}`)
+        fetch(`${BASE_URL}ajax/nuevos-mensajes?conversacion_id=${conversacionId}&ultimo_id=${ultimoIdProcesado}`)
         .then(response => response.json())
         .then(data => {
             if (data && data.length > 0) {
@@ -139,12 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const esMensajeDelCliente = msg.remitente_id == clienteId;
                     const esVistaDeAdmin = window.location.pathname.includes('/admin/');
                     
-                    let msgClass = '';
-                    if (esVistaDeAdmin) {
-                        msgClass = esMensajeDelCliente ? 'received' : 'sent';
-                    } else {
-                        msgClass = esMensajeDelCliente ? 'sent' : 'received';
-                    }
+                    const msgClass = (msg.remitente_id == clienteId) ? 'received' : 'sent';
                     
                     // Función para formatear texto y convertir URLs a enlaces en JavaScript
                     function linkify(text) {
@@ -180,11 +173,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="timestamp">${new Date(msg.fecha_envio).toLocaleString()}</div>`;
                     console.log("messageDiv.innerHTML = ", messageDiv.innerHTML);
                     chatBox.prepend(messageDiv);
+                    ultimoIdProcesado = msg.id; 
                 });
                 // Le pedimos al navegador que haga el scroll en el próximo ciclo de renderizado.
-                window.requestAnimationFrame(() => {
+                //window.requestAnimationFrame(() => {
                     scrollToBottom();
-                });
+                //});
             }
         });
     }

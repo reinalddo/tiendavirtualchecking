@@ -3,7 +3,7 @@ require_once 'includes/header.php';
 require_once 'includes/db_connection.php';
 
 $titulo_pagina = "Todos los Productos";
-$categoria_id = $_GET['categoria'] ?? null;
+$categoria_slug = $_GET['categoria_slug'] ?? null; // Leemos el slug de la categoría
 
 // Preparamos la base de la consulta SQL
 $sql = "SELECT p.*,
@@ -14,22 +14,25 @@ $sql = "SELECT p.*,
 $params = [];
 
 // Si se especifica una categoría, modificamos la consulta
-if ($categoria_id) {
-    $sql .= "JOIN producto_categorias pc ON p.id = pc.producto_id WHERE p.es_activo = 1 AND pc.categoria_id = ?";
-    $params[] = $categoria_id;
+if ($categoria_slug) {
+    // Si se especifica un slug, modificamos la consulta para filtrar
+    $sql .= " JOIN producto_categorias pc ON p.id = pc.producto_id
+              JOIN categorias c ON pc.categoria_id = c.id
+              WHERE p.es_activo = 1 AND c.slug = ?";
+    $params[] = $categoria_slug;
 
     // Obtenemos el nombre de la categoría para el título
-    $stmt_cat = $pdo->prepare("SELECT nombre FROM categorias WHERE id = ?");
-    $stmt_cat->execute([$categoria_id]);
+    $stmt_cat = $pdo->prepare("SELECT nombre FROM categorias WHERE slug = ?");
+    $stmt_cat->execute([$categoria_slug]);
     $nombre_cat = $stmt_cat->fetchColumn();
     if ($nombre_cat) {
         $titulo_pagina = "Productos en: " . htmlspecialchars($nombre_cat);
     }
 } else {
-    $sql .= "WHERE p.es_activo = 1 ";
+    $sql .= " WHERE p.es_activo = 1 ";
 }
 
-$sql .= "ORDER BY p.fecha_creacion DESC";
+$sql .= " ORDER BY p.fecha_creacion DESC ";
 
 // Ejecutamos la consulta final
 $stmt_productos = $pdo->prepare($sql);

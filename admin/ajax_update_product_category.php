@@ -1,8 +1,7 @@
 <?php
 // admin/ajax_update_product_category.php
-session_start();
-require_once '../includes/db_connection.php';
-// ... (Verificación de seguridad de admin) ...
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 $producto_id = $_POST['producto_id'] ?? 0;
 $categoria_id = $_POST['categoria_id'] ?? 0;

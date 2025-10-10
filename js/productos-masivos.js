@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const field = this.name;
             const value = this.value;
 
-            fetch(BASE_URL + 'admin/ajax_update_producto.php', {
+            fetch(BASE_URL + 'panel/ajax/update-producto', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `id=${productoId}&field=${field}&value=${encodeURIComponent(value)}`
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             
             // Enviamos los nombres de archivo al servidor para asociarlos
-            fetch(BASE_URL + 'admin/ajax_associate_media.php', {
+            fetch(BASE_URL + 'panel/ajax/associate-media', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body: `producto_id=${productoId}&filenames[]=${fileNames.join('&filenames[]=')}`
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
             confirmButton.removeEventListener('click', handleDeleteImage);
 
             function handleDeleteImage() {
-                fetch(BASE_URL + 'admin/ajax_delete_gallery_item.php', {
+                fetch(BASE_URL + 'panel/ajax/delete-gallery-item', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                     body: 'gallery_id=' + galleryId
@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const categoriaId = this.value;
             const isChecked = this.checked;
 
-            fetch(BASE_URL + 'admin/ajax_update_product_category.php', {
+            fetch(BASE_URL + 'panel/ajax/update-product-category', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body: `producto_id=${productoId}&categoria_id=${categoriaId}&checked=${isChecked}`
@@ -200,7 +200,7 @@ if (categoriasModal) {
         });
 
         // Petición AJAX para guardar los cambios
-        fetch(BASE_URL + 'admin/ajax_save_product_categories.php', {
+        fetch(BASE_URL + 'panel/ajax/save-categories', {
             method: 'POST',
             body: new URLSearchParams(formData)
         })

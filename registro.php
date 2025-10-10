@@ -2,7 +2,7 @@
 // registro.php
 
 // Primero, procesamos la lógica del formulario
-require_once 'includes/db_connection.php';
+//require_once 'includes/db_connection.php';
 require_once 'includes/config.php';
 
 // Initialize variables

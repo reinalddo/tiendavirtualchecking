@@ -1,7 +1,7 @@
 <?php
 // admin/ajax_update_moneda.php
-session_start();
-require_once '../includes/db_connection.php';
+require_once '../includes/config.php';
+verificar_sesion_admin();
 
 if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin' || $_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(403); exit();
