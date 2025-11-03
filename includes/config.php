@@ -63,15 +63,8 @@ if (!isset($_SESSION['usuario_id']) && isset($_COOKIE['remember_me'])) {
         }
     }
 }
-// --- FIN DEL NUEVO BLOQUE ---
+// --- FIN DEL NUEVO BLOQUE --- //
 
-
-
-if (ENTORNO == 'desarrollo') {
-    define('GOOGLE_REDIRECT_URL', 'http://localhost.tiendaweb.com/google-callback.php');
-}else{
-    define('GOOGLE_REDIRECT_URL', 'https://tienda.primerpasodigital.com/google-callback.php');
-}
 require_once __DIR__ . '/db_connection.php'; // Ahora $pdo está disponible
     
 // Establecer moneda por defecto en la primera visita

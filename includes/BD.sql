@@ -103,6 +103,16 @@ CREATE TABLE monedas (
     simbolo VARCHAR(5) NOT NULL -- Ejemplo: "$"
 );
 
+-- Tabla para almacenar tokens de restablecimiento de contraseña
+CREATE TABLE password_resets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(191) NOT NULL,
+    selector CHAR(24) NOT NULL UNIQUE, -- Selector público
+    hashed_token CHAR(64) NOT NULL,    -- Token secreto hasheado
+    expires_at DATETIME NOT NULL,
+    INDEX (email),
+    INDEX (expires_at)
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 -- 2. Insertamos algunas monedas como ejemplo
 INSERT INTO monedas (nombre, codigo, simbolo) VALUES
 ('Dólar Americano', 'USD', '$'),
@@ -285,6 +295,18 @@ INSERT INTO configuraciones (nombre_setting, valor_setting) VALUES
 ('tienda_telefono', '+58 276-1234567'),
 ('iva_porcentaje', '16.00');
 INSERT INTO configuraciones (nombre_setting, valor_setting) VALUES ('tienda_logo', '');
+INSERT INTO `configuraciones` (`nombre_setting`, `valor_setting`) VALUES
+('tienda_nombre', 'Mi Tienda'),
+('tienda_descripcion_corta', 'Aquí puedes escribir una breve descripción de tu tienda, tu misión o los productos que ofreces.'),
+('tienda_email_footer', 'info@mitienda.com'),
+('tienda_email_footer_activo', '0');
+
+INSERT INTO `configuraciones` (`nombre_setting`, `valor_setting`) VALUES
+('whatsapp_numero', ''),
+('whatsapp_activo', '0');
+INSERT INTO `configuraciones` (`nombre_setting`, `valor_setting`) VALUES
+('whatsapp_mensaje', '¡Hola! Tengo una pregunta sobre un producto.');
+
 
 ALTER TABLE pedidos ADD COLUMN iva_total DECIMAL(10, 2) NOT NULL DEFAULT 0.00 AFTER total;
 
@@ -362,3 +384,98 @@ ADD COLUMN `slug` VARCHAR(191) NULL UNIQUE AFTER `nombre`;
 
 ALTER TABLE `categorias`
 ADD COLUMN `slug` VARCHAR(191) NULL UNIQUE AFTER `nombre`;
+
+INSERT INTO configuraciones (nombre_setting, valor_setting) VALUES
+('header_bg_color', '#343a40'),
+('header_font_color', '#ffffff'),
+('header_font_size', '16'),
+('header_font_family', 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"'),
+('footer_bg_color', '#212529'),
+('footer_font_color', '#ffffff'),
+('footer_font_size', '14'),
+('dropdown_bg_color', '#ffffff'),
+('dropdown_font_color', '#212529');
+INSERT INTO configuraciones (nombre_setting, valor_setting) VALUES
+('search_button_bg_color', '#198754'), -- Color verde por defecto de Bootstrap
+('search_button_font_color', '#ffffff'); -- Color blanco por defecto
+INSERT INTO configuraciones (nombre_setting, valor_setting) VALUES
+('cat_filter_bg_color', '#f8f9fa'),      -- Fondo normal (gris claro Bootstrap por defecto)
+('cat_filter_font_color', '#6c757d'),    -- Fuente normal (gris Bootstrap por defecto)
+('cat_filter_active_bg_color', '#343a40'), -- Fondo activo (oscuro Bootstrap por defecto)
+('cat_filter_active_font_color', '#ffffff'); -- Fuente activa (blanca Bootstrap por defecto)
+INSERT INTO configuraciones (nombre_setting, valor_setting) VALUES
+('primary_button_bg_color', '#0d6efd'), -- Azul primario de Bootstrap por defecto
+('primary_button_font_color', '#ffffff'); -- Texto blanco por defecto
+
+SET GLOBAL default_storage_engine = INNODB;
+
+-- 1. Modificar la tabla productos
+ALTER TABLE `productos` 
+ADD COLUMN `tipo_producto` ENUM('fisico','digital') NOT NULL DEFAULT 'fisico',
+ADD COLUMN `archivo_digital_nombre` VARCHAR(255) NULL DEFAULT NULL COMMENT 'Nombre original del archivo subido' AFTER `tipo_producto`,
+ADD COLUMN `archivo_digital_ruta` VARCHAR(255) NULL DEFAULT NULL COMMENT 'Ruta relativa al archivo en el servidor' AFTER `archivo_digital_nombre`;
+
+
+-- (Opcional pero recomendado) Quitar valor por defecto de stock o manejarlo diferente para digitales
+-- ALTER TABLE `productos` MODIFY COLUMN `stock` INT NULL DEFAULT NULL; 
+
+-- 2. Crear la tabla para gestionar las descargas
+CREATE TABLE `pedidos_descargas` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `pedido_detalle_id` INT NOT NULL COMMENT 'ID del item específico en el pedido',
+  `usuario_id` INT NOT NULL,
+  `producto_id` INT NOT NULL,
+  `token_descarga` VARCHAR(64) NOT NULL UNIQUE COMMENT 'Token único para el enlace de descarga',
+  `fecha_expiracion` DATETIME NULL DEFAULT NULL COMMENT 'Opcional: Cuándo expira el enlace',
+  `descargas_restantes` INT NULL DEFAULT 5 COMMENT 'Opcional: Límite de descargas (null = ilimitado)',
+  `fecha_creacion` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (`pedido_detalle_id`) REFERENCES `pedido_detalles`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`usuario_id`) REFERENCES `usuarios`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`producto_id`) REFERENCES `productos`(`id`) ON DELETE CASCADE
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+ALTER TABLE `productos` MODIFY COLUMN `stock` INT NULL DEFAULT NULL;
+INSERT INTO configuraciones (nombre_setting, valor_setting) VALUES
+('digital_download_limit', '5') -- Valor por defecto: 5 descargas
+ON DUPLICATE KEY UPDATE valor_setting = valor_setting; -- No sobrescribir si ya existe
+
+ALTER TABLE `pedidos_descargas` ADD UNIQUE INDEX `unique_pedido_detalle` (`pedido_detalle_id`);
+
+INSERT INTO configuraciones (nombre_setting, valor_setting) 
+VALUES 
+('pagoflash_activo', '0'),
+('pagoflash_commerce_token', ''),
+('pagoflash_entorno', 'calidad')
+ON DUPLICATE KEY UPDATE valor_setting = valor_setting;
+
+INSERT INTO configuraciones (nombre_setting, valor_setting) 
+VALUES 
+('paypal_activo', '0'),                 -- Para activar/desactivar PayPal (0=inactivo, 1=activo)
+('paypal_client_id', ''),               -- Tu Client ID de PayPal API
+('paypal_client_secret', ''),           -- Tu Client Secret de PayPal API
+('paypal_entorno', 'sandbox')           -- Para seleccionar 'sandbox' (pruebas) o 'live' (producción)
+ON DUPLICATE KEY UPDATE valor_setting = valor_setting; -- No sobrescribir si ya existen
+
+ALTER TABLE pedidos ADD COLUMN id_transaccion_gw VARCHAR(100) NULL DEFAULT NULL AFTER cupon_usado;
+
+INSERT INTO configuraciones (nombre_setting, valor_setting)
+VALUES ('paypal_webhook_id', '') -- Pega tu Webhook ID aquí después
+ON DUPLICATE KEY UPDATE valor_setting = valor_setting;
+
+-- Modificar Pagoflash (si ya existe)
+UPDATE configuraciones SET valor_setting = '0' WHERE nombre_setting = 'pagoflash_entorno' AND valor_setting = 'calidad';
+UPDATE configuraciones SET valor_setting = '1' WHERE nombre_setting = 'pagoflash_entorno' AND valor_setting = 'produccion';
+
+-- Modificar PayPal (si ya existe)
+UPDATE configuraciones SET valor_setting = '0' WHERE nombre_setting = 'paypal_entorno' AND valor_setting = 'sandbox';
+UPDATE configuraciones SET valor_setting = '1' WHERE nombre_setting = 'paypal_entorno' AND valor_setting = 'live';
+
+INSERT INTO configuraciones (nombre_setting, valor_setting)
+VALUES ('venezuela', '0') -- 0 No es de Venezuela, 1 Si es de Venezuela
+ON DUPLICATE KEY UPDATE valor_setting = valor_setting;
+
+INSERT INTO configuraciones (nombre_setting, valor_setting)
+VALUES
+('google_client_id', ''),
+('google_client_secret', '')
+ON DUPLICATE KEY UPDATE valor_setting = valor_setting;

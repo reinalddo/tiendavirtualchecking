@@ -19,6 +19,31 @@ $stmt = $pdo->prepare("SELECT p.*,
     ORDER BY p.fecha_pedido DESC");
 $stmt->execute([$usuario_id]);
 $pedidos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// ===== INICIO: NUEVA CONSULTA PARA OBTENER DESCARGAS =====
+$stmt_descargas = $pdo->prepare("
+    SELECT
+        pdg.token_descarga,
+        pdg.descargas_restantes,
+        pdg.fecha_expiracion,
+        prod.nombre as nombre_producto,
+        prod.archivo_digital_nombre as nombre_archivo_original,
+        p.id as pedido_id,
+        p.fecha_pedido
+    FROM pedidos_descargas pdg
+    JOIN productos prod ON pdg.producto_id = prod.id
+    JOIN pedido_detalles pd ON pdg.pedido_detalle_id = pd.id
+    JOIN pedidos p ON pd.pedido_id = p.id
+    WHERE pdg.usuario_id = ?
+      AND p.estado = 'Pagado' -- Asegurarse de que el pedido esté pagado
+      AND (pdg.fecha_expiracion IS NULL OR pdg.fecha_expiracion >= NOW()) -- Que no haya expirado
+      AND (pdg.descargas_restantes IS NULL OR pdg.descargas_restantes > 0) -- Que queden descargas
+    ORDER BY p.fecha_pedido DESC, prod.nombre ASC
+");
+$stmt_descargas->execute([$usuario_id]);
+$descargas_disponibles = $stmt_descargas->fetchAll(PDO::FETCH_ASSOC);
+// ===== FIN: NUEVA CONSULTA =====
+
 require_once 'includes/header.php';
 ?>
 
@@ -33,10 +58,23 @@ require_once 'includes/header.php';
                     </div>
                 </div>
 
-                <div class="card shadow-sm">
-                    <div class="card-header">
-                        <h2 class="my-0 fw-normal fs-4">Mis Pedidos</h2>
-                    </div>
+                <ul class="nav nav-tabs" id="perfilTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="pedidos-tab" data-bs-toggle="tab" data-bs-target="#pedidos-pane" type="button" role="tab" aria-controls="pedidos-pane" aria-selected="true">
+                            <i class="bi bi-receipt me-1"></i> Mis Pedidos
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="descargas-tab" data-bs-toggle="tab" data-bs-target="#descargas-pane" type="button" role="tab" aria-controls="descargas-pane" aria-selected="false">
+                            <i class="bi bi-download me-1"></i> Mis Descargas Digitales
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content card shadow-sm border-top-0" id="perfilTabsContent">
+                    
+                <div class="tab-pane fade show active" id="pedidos-pane" role="tabpanel" aria-labelledby="pedidos-tab">
+
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
@@ -119,6 +157,60 @@ require_once 'includes/header.php';
                     </div>
                 </div>
 
+                <div class="tab-pane fade" id="descargas-pane" role="tabpanel" aria-labelledby="descargas-tab">
+
+                    <div class="card-body">
+                        <?php if (empty($descargas_disponibles)): ?>
+                            <p class="text-muted">No tienes productos digitales disponibles para descargar en este momento.</p>
+                        <?php else: ?>
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Producto</th>
+                                            <th>Pedido #</th>
+                                            <th>Fecha Compra</th>
+                                            <th>
+                                                Descargas Restantes
+                                                <i class="bi bi-question-circle-fill ms-1" 
+                                                   data-bs-toggle="tooltip" 
+                                                   data-bs-placement="top" 
+                                                   title="Número de veces que puedes descargar el archivo. El límite ayuda a prevenir que se comparta el enlace."></i>
+                                            </th>
+                                            <th class="text-end">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($descargas_disponibles as $descarga): ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($descarga['nombre_producto']); ?></td>
+                                                <td>#<?php echo htmlspecialchars($descarga['pedido_id']); ?></td>
+                                                <td><?php echo date("d/m/Y", strtotime($descarga['fecha_pedido'])); ?></td>
+                                                <td>
+                                                    <?php
+                                                    if (is_null($descarga['descargas_restantes'])) {
+                                                        echo 'Ilimitadas';
+                                                    } else {
+                                                        echo htmlspecialchars($descarga['descargas_restantes']);
+                                                    }
+                                                    ?>
+                                                </td>
+                                                <td class="text-end">
+                                                    <a href="descargar/<?php echo htmlspecialchars($descarga['token_descarga']); ?>" class="btn btn-success btn-sm" target="_blank">
+                                                        <i class="bi bi-download me-1"></i> Descargar
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                </div>
+
+                
             </div>
         </div>
     </div>

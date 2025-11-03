@@ -28,6 +28,11 @@ document.addEventListener('DOMContentLoaded', function() {
             galleryContainer.classList.add('video-active');
             newContent = `<iframe src="https://www.youtube.com/embed/${url}" frameborder="0" allowfullscreen class="clickable-gallery-image" data-index="${index}"></iframe>`;
             if (backgroundDiv) backgroundDiv.style.backgroundImage = 'none';
+        } else if (tipo === 'video_archivo') {
+            galleryContainer.classList.add('video-active');
+            const videoUrl = `${BASE_URL}uploads/videos/${url}`;
+            newContent = `<video controls autoplay muted loop playsinline style="width:100%; height:100%; object-fit:contain;" class="clickable-gallery-image" data-index="${index}"><source src="${videoUrl}" type="video/mp4">Tu navegador no soporta el video.</video>`;
+            if (backgroundDiv) backgroundDiv.style.backgroundImage = 'none';
         }
         
         mainGalleryDiv.innerHTML = newContent;
@@ -47,6 +52,9 @@ document.addEventListener('DOMContentLoaded', function() {
             modalHTML = `<img src="${BASE_URL}uploads/${url}">`;
         } else if (tipo === 'youtube') {
             modalHTML = `<iframe src="https://www.youtube.com/embed/${url}?autoplay=1&rel=0" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        } else if (tipo === 'video_archivo') {
+            const videoUrl = `${BASE_URL}uploads/videos/${url}`;
+            modalHTML = `<video controls autoplay style="max-width:100%; max-height:90vh;"><source src="${videoUrl}" type="video/mp4"></video>`;
         }
         
         modalContentHost.innerHTML = modalHTML;

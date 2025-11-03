@@ -10,19 +10,25 @@ try {
 
     // Consulta para los productos
     $sql_productos = "SELECT p.*,
-                        (SELECT gal.url FROM producto_galeria gal WHERE gal.producto_id = p.id AND gal.tipo = 'imagen' ORDER BY gal.orden ASC, gal.id ASC LIMIT 1) as imagen_principal
+                        (SELECT gal.url FROM producto_galeria gal WHERE gal.producto_id = p.id AND gal.tipo = 'imagen' ORDER BY gal.orden ASC, gal.id ASC LIMIT 1) as imagen_principal,
+                        GROUP_CONCAT(pc.categoria_id) as categorias_ids
                       FROM productos p
+                      LEFT JOIN producto_categorias pc ON p.id = pc.producto_id
                       WHERE p.es_activo = 1 
+                      GROUP BY p.id
                       ORDER BY p.fecha_creacion DESC";
     $stmt_productos = $pdo->prepare($sql_productos);
     $stmt_productos->execute();
     $productos = $stmt_productos->fetchAll(PDO::FETCH_ASSOC);
 
     // 2. OBTENER LAS CATEGORÍAS DESTACADAS
-    $stmt_cat_destacadas = $pdo->query("
-        SELECT id, nombre, slug FROM categorias 
-        WHERE mostrar_en_inicio = 1 
-        AND id IN (SELECT DISTINCT categoria_id FROM producto_categorias)
+$stmt_cat_destacadas = $pdo->query("
+        SELECT DISTINCT c.id, c.nombre, c.slug 
+        FROM categorias c
+        JOIN producto_categorias pc ON c.id = pc.categoria_id
+        JOIN productos p ON pc.producto_id = p.id
+        WHERE c.mostrar_en_inicio = 1 AND p.es_activo = 1
+        ORDER BY c.nombre ASC
     ");
     $categorias_destacadas = $stmt_cat_destacadas->fetchAll(PDO::FETCH_ASSOC);
 
@@ -69,45 +75,37 @@ try {
                 </section>
 
                 <h2>Nuestros Productos</h2>
-                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
+
+                <?php if (!empty($categorias_destacadas)): ?>
+                <ul class="nav nav-pills justify-content-center mb-4" id="category-filter-nav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-category-id="todos">Todos</a>
+                    </li>
+                    <?php foreach ($categorias_destacadas as $categoria): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#" data-category-id="<?php echo $categoria['id']; ?>"><?php echo htmlspecialchars($categoria['nombre']); ?></a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+                <?php endif; ?>
+
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4" id="product-grid">
                     <?php if (empty($productos)): ?>
                         <div class="col">
                             <p>No se encontraron productos.</p>
                         </div>
                     <?php else: ?>
                         <?php foreach ($productos as $producto): ?>
-                            <?php include 'includes/product_card.php'; // Incluimos la tarjeta reutilizable ?>
+                            <?php 
+                            // Preparamos los IDs de categoría para el atributo de datos
+                            $data_categorias = ',' . ($producto['categorias_ids'] ?? '') . ',';
+                            ?>
+                            <div class="col product-filter-item" data-category-ids="<?php echo $data_categorias; ?>">
+                                <?php include 'includes/product_card.php'; ?>
+                            </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
-                <br><br>
-                <?php foreach ($categorias_destacadas as $categoria): ?>
-                    <?php
-                    // Obtenemos hasta 8 productos para esta categoría
-                    $stmt_prod_cat = $pdo->prepare("
-                        SELECT p.*,
-                            (SELECT gal.url FROM producto_galeria gal WHERE gal.producto_id = p.id AND gal.tipo = 'imagen' ORDER BY gal.orden ASC, gal.id ASC LIMIT 1) as imagen_principal
-                        FROM productos p
-                        JOIN producto_categorias pc ON p.id = pc.producto_id
-                        WHERE p.es_activo = 1 AND pc.categoria_id = ?
-                        LIMIT 8
-                    ");
-                    $stmt_prod_cat->execute([$categoria['id']]);
-                    $productos = $stmt_prod_cat->fetchAll(PDO::FETCH_ASSOC);
-                    ?>
-                    <section class="featured-category mb-5">
-                        <div class="category-title-wrapper d-flex justify-content-between align-items-center">
-                            <h2 class="category-title"><?php echo htmlspecialchars($categoria['nombre']); ?></h2>
-                            <a href="categoria/<?php echo htmlspecialchars($categoria['slug']); ?>" class="btn btn-outline-primary">Ver toda la categoría</a>
-                        </div>
-                        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-                            <?php foreach ($productos as $producto): ?>
-                                <?php include 'includes/product_card.php'; ?>
-                            <?php endforeach; ?>
-                        </div>
-                    </section>
-                <?php endforeach; ?>
-
                 
             </div>
         </div>

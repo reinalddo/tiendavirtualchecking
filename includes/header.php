@@ -62,7 +62,7 @@ if (session_status() === PHP_SESSION_NONE) {
     <link rel="stylesheet" href="css/gallery-detail.css">
     <link rel="stylesheet" href="css/product-detail-style.css">
 
-
+    <link rel="stylesheet" href="dynamic_styles.php">
     <script>const BASE_URL = '<?php echo BASE_URL; ?>';</script>
 
 </head>
@@ -70,7 +70,7 @@ if (session_status() === PHP_SESSION_NONE) {
 <?php /* ?> <img src="<?php echo htmlspecialchars($_SESSION['usuario_avatar'] ?? BASE_URL . '../avatar/avatar-default.png'); ?>" alt="Avatar" class="nav-avatar"> <?php */ ?>
 
 <header class="sticky-top">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+    <nav class="navbar navbar-expand-lg shadow-sm">
         <div class="container-fluid">
         <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
             <?php
@@ -105,9 +105,11 @@ if (session_status() === PHP_SESSION_NONE) {
                                 <?php
                                 // Obtenemos solo categorías activas y con productos
                                 $stmt_cats = $pdo->query("
-                                    SELECT c.id, c.nombre, c.slug FROM categorias c
+                                    SELECT DISTINCT c.id, c.nombre, c.slug 
+                                    FROM categorias c
                                     JOIN producto_categorias pc ON c.id = pc.categoria_id
-                                    GROUP BY c.id HAVING COUNT(pc.producto_id) > 0
+                                    JOIN productos p ON pc.producto_id = p.id
+                                    WHERE p.es_activo = 1
                                     ORDER BY c.nombre ASC
                                 ");
                                 $categorias_menu = $stmt_cats->fetchAll(PDO::FETCH_ASSOC);

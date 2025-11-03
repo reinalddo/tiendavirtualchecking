@@ -9,6 +9,7 @@ $todos_los_productos = $pdo->query("SELECT p.id, p.nombre,
 (SELECT gal.url FROM producto_galeria gal WHERE gal.producto_id = p.id AND gal.tipo = 'imagen' ORDER BY gal.orden ASC, gal.id ASC LIMIT 1) as imagen_principal
 FROM productos p ORDER BY p.nombre ASC")->fetchAll(PDO::FETCH_ASSOC);
 
+require_once '../includes/header.php';
 ?>
 
 <main>

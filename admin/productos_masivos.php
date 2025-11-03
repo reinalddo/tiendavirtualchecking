@@ -58,6 +58,7 @@ $productos = $stmt_productos->fetchAll(PDO::FETCH_ASSOC);
 
 // Obtener todas las categorías para el selector del filtro
 $todas_las_categorias = $pdo->query("SELECT id, nombre FROM categorias ORDER BY nombre ASC")->fetchAll(PDO::FETCH_ASSOC);
+require_once '../includes/header.php';
 
 ?>
 <main>

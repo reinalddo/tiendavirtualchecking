@@ -24,7 +24,7 @@ if (is_numeric($id_from_url)) {
     <p>Hemos recibido tu pedido y lo estamos procesando.</p>
     <p>Tu número de pedido es: <strong><?php echo $pedido_id; ?></strong></p>
     <p>Recibirás una confirmación por correo electrónico pronto.</p>
-    <a href="index.php" class="button">Volver a la Tienda</a>
+    <a href="index.php" class="btn btn-primary">Volver a la Tienda</a>
 </div>
 </div>
 </div>

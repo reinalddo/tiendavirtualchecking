@@ -13,6 +13,7 @@ $stmt = $pdo->query("SELECT p.*,
                      GROUP BY p.id
                      ORDER BY p.fecha_creacion DESC");
 $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+require_once '../includes/header.php';
 ?>
 
 <main>
@@ -55,7 +56,12 @@ $productos = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <span>$<?php echo htmlspecialchars(number_format($producto['precio_usd'], 2)); ?></span>
                                     <?php endif; ?>
                                 </td>
-                                <td><?php echo htmlspecialchars($producto['stock']); ?></td>
+                                <td>
+                                    <?php 
+                                    // Si el stock es NULL (producto digital), muestra 'N/A', si no, muestra el número
+                                    echo is_null($producto['stock']) ? '<span class="text-muted">N/A (Digital)</span>' : htmlspecialchars($producto['stock']); 
+                                    ?>
+                                </td>
                                 <td><?php echo htmlspecialchars($producto['categorias'] ?? 'N/A'); ?></td>
                                 <td>
                                     <?php if ($producto['es_activo']): ?>

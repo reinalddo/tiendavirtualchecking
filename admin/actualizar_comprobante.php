@@ -25,6 +25,7 @@ if ($comprobante_id > 0 && $pedido_id > 0 && in_array($accion, ['aprobar', 'rech
     if ($accion == 'aprobar') {
         $stmt_pedido = $pdo->prepare("UPDATE pedidos SET estado = 'Pagado' WHERE id = ?");
         $stmt_pedido->execute([$pedido_id]);
+        generar_accesos_descarga($pdo, $pedido_id, $config);
         $mensaje_cliente = "¡Tu pago para el pedido #" . $pedido_id . " ha sido aprobado! Pronto será enviado.";
     } else {
         $mensaje_cliente = "Tu comprobante para el pedido #" . $pedido_id . " fue rechazado. Por favor, sube uno nuevo.";

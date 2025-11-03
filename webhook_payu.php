@@ -45,6 +45,7 @@ if (strtoupper($sign) === strtoupper($signature_to_check)) {
             $stmt_cliente = $pdo->prepare("SELECT usuario_id FROM pedidos WHERE id = ?");
             $stmt_cliente->execute([$pedido_id]);
             $cliente_id = $stmt_cliente->fetchColumn();
+            generar_accesos_descarga($pdo, $pedido_id, $config);
             if ($cliente_id) {
                 crear_notificacion($pdo, $cliente_id, "Tu pago para el pedido #{$pedido_id} fue aprobado por PayU.", BASE_URL . "perfil.php");
             }

@@ -940,3 +940,63 @@ html {
     overflow-y: scroll;
 }
 
+/* --- Estilos para Filtro de Categorías en Index --- */
+#category-filter-nav .nav-link {
+    color: #6c757d;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+#category-filter-nav .nav-link.active {
+    background-color: #343a40 !important;
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+/* Ocultar y mostrar productos con transición */
+.product-filter-item {
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+/* ===== INICIO: Responsive Filtro Categorías Index ===== */
+#category-filter-nav {
+    flex-wrap: wrap; /* Permite que los botones pasen a la línea siguiente */
+    margin-bottom: 1.5rem !important; /* Asegura espacio inferior */
+}
+
+/* Opcional: Para pantallas muy pequeñas, podrías hacer scroll horizontal */
+@media (max-width: 576px) {
+    #category-filter-nav {
+       flex-wrap: nowrap; /* Desactiva el wrap si prefieres scroll */
+       overflow-x: auto;  /* Activa el scroll horizontal */
+       justify-content: flex-start !important; /* Alinea al inicio para scroll */
+       padding-bottom: 10px; /* Espacio para la barra de scroll */
+    }
+    #category-filter-nav .nav-item {
+        flex-shrink: 0; /* Evita que los botones se encojan con scroll */
+    }
+}
+/* ===== FIN: Responsive Filtro Categorías Index ===== */
+
+/* ===== INICIO: Estilos Mapa Responsivo Contacto ===== */
+.map-responsive-container {
+    overflow: hidden; /* Oculta cualquier desbordamiento */
+    padding-bottom: 56.25%; /* Proporción 16:9 (ajusta si tu mapa es diferente) */
+    position: relative;
+    height: 0;
+    border: 1px solid #ccc; /* Borde opcional */
+    border-radius: 4px; /* Bordes redondeados opcionales */
+}
+
+.map-responsive-container iframe {
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    border: 0; /* Quita el borde por defecto del iframe */
+}
+/* ===== FIN: Estilos Mapa Responsivo Contacto ===== */
+
+
+

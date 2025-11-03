@@ -50,7 +50,10 @@
 
     # Regla para perfil
     RewriteRule ^perfil/?$ perfil.php [L]
-
+    
+    # Regla para google-login
+    RewriteRule ^google-callback/?$ google-callback.php [L,QSA]
+    
     # Regla para editar-perfil
     RewriteRule ^editar-perfil/?$ editar_perfil.php [L]
 
@@ -74,6 +77,12 @@
 
     # Regla para VER la lista de preguntas
     RewriteRule ^panel/ver_preguntas/?$ admin/ver_preguntas.php [L]
+
+    # Reglas para Restablecimiento de Contraseña
+    RewriteRule ^solicitar-restablecimiento/?$ solicitar_restablecimiento.php [L]
+    RewriteRule ^procesar-solicitud-restablecimiento/?$ procesar_solicitud_restablecimiento.php [L]
+    RewriteRule ^restablecer-contrasena/?$ restablecer_contrasena.php [L,QSA] # QSA para pasar los tokens GET
+    RewriteRule ^procesar-restablecimiento/?$ procesar_restablecimiento.php [L]
 
     # Regla para guardar un producto (nuevo o editado)
     RewriteRule ^panel/producto/guardar/?$ admin/guardar_producto.php [L]
@@ -108,6 +117,9 @@
     RewriteRule ^panel/galeria/guardar/?$ admin/guardar_slide.php [L]
     # Regla para eliminar un slide
     RewriteRule ^panel/galeria/eliminar/([0-9]+)/?$ admin/eliminar_slide.php?id=$1 [L]
+    # Regla para eliminar un ítem de la galería (imagen o video)
+    RewriteRule ^panel/galeria/item/eliminar/([0-9]+)/producto/([0-9]+)/?$ admin/eliminar_imagen_galeria.php?id=$1&producto_id=$2 [L,QSA]
+
     # Regla para el AJAX que actualiza un slide
     RewriteRule ^panel/ajax/update-slide/?$ admin/ajax_update_slide.php [L]
     # Regla para la página de gestión de la galería de inicio
@@ -208,8 +220,22 @@
     # Regla para añadir/quitar de la wishlist
     RewriteRule ^toggle-wishlist/?$ toggle_wishlist.php [L]
 
-    # --- REGLA MÁS GENERAL AL FINAL ---
+    # Regla para el script de descarga segura de productos digitales
+    RewriteRule ^descargar/([a-zA-Z0-9]+)/?$ descargar_producto.php?token=$1 [L,QSA]
 
+    # Rutas para Pagoflash
+    RewriteRule ^respuesta_pagoflash/?$ respuesta_pagoflash.php [L,QSA]
+    RewriteRule ^webhook_pagoflash/?$ webhook_pagoflash.php [L]
+
+    # ===== INICIO: NUEVAS REGLAS PAYPAL =====
+    RewriteRule ^paypal/create-order/?$ paypal_create_order.php [L]
+    RewriteRule ^paypal/capture-order/?$ paypal_capture_order.php [L]
+    RewriteRule ^paypal/webhook/?$ webhook_paypal.php [L]
+    RewriteRule ^paypal/respuesta/?$ respuesta_paypal.php [L,QSA]
+    # ===== FIN: NUEVAS REGLAS PAYPAL =====
+
+    # --- REGLA MÁS GENERAL AL FINAL ---
+    
     # 4. Regla para quitar .php de otras páginas (Ej: /contacto, /perfil)
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f

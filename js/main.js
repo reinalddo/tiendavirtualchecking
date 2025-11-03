@@ -1,5 +1,9 @@
 
 document.addEventListener('DOMContentLoaded', function() {
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+  return new bootstrap.Tooltip(tooltipTriggerEl)
+});
     // --- LÓGICA DE LA GALERÍA DE PRODUCTOS ---
     const galleryContainer = document.querySelector('.product-gallery');
     if (galleryContainer) {
@@ -93,6 +97,36 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
+// ===== INICIO PARA FILTRAR PRODUCTOS EN EL INDEX =====
+    const categoryNav = document.getElementById('category-filter-nav');
+    if (categoryNav) {
+        const filterLinks = categoryNav.querySelectorAll('.nav-link');
+        const productItems = document.querySelectorAll('#product-grid .product-filter-item');
+
+        filterLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // Marcar el link activo
+                filterLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+
+                const categoryId = this.dataset.categoryId;
+
+                // Filtrar los productos
+                productItems.forEach(item => {
+                    const itemCategories = item.dataset.categoryIds;
+                    
+                    if (categoryId === 'todos' || itemCategories.includes(',' + categoryId + ',')) {
+                        item.style.display = 'block'; // Mostrar
+                    } else {
+                        item.style.display = 'none'; // Ocultar
+                    }
+                });
+            });
+        });
+    }
+    // ===== FIN FILTRAR PRODUCTOS EN EL INDEX =====
 
     // --- LÓGICA PARA AÑADIR CATEGORÍAS (AJAX) ---
     const addCategoryBtn = document.getElementById('add-category-btn');

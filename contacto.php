@@ -86,7 +86,7 @@ $config = $stmt_config->fetchAll(PDO::FETCH_KEY_PAIR);
                 ?>
                     <div class="mt-4">
                         <h3>Ubicación</h3>
-                        <div class="map-container">
+                        <div class="map-responsive-container">
                             <?php echo $config['mapa_principal']; // Imprimimos el mapa desde la BD ?>
                         </div>
                     </div>

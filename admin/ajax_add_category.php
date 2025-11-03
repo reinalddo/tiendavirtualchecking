@@ -12,10 +12,11 @@ if (!isset($_SESSION['usuario_id']) || $_SESSION['usuario_rol'] !== 'admin' || e
 
 $nombre = trim($_POST['nombre']);
 $codigo = trim($_POST['codigo']);
+$slug = generar_slug($nombre); // Usamos la función del helper
 
 try {
-    $stmt = $pdo->prepare("INSERT INTO categorias (nombre, codigo) VALUES (?, ?)");
-    $stmt->execute([$nombre, $codigo]);
+    $stmt = $pdo->prepare("INSERT INTO categorias (nombre, codigo, slug) VALUES (?, ?, ?)");
+    $stmt->execute([$nombre, $codigo, $slug]); // Añadimos $slug a la ejecución
     $new_id = $pdo->lastInsertId();
 
     // Devolvemos el ID y el nombre de la nueva categoría en formato JSON
@@ -24,6 +25,10 @@ try {
 
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error al guardar en la base de datos: ' . $e->getMessage()]);
+    if ($e->getCode() == 23000) {
+         echo json_encode(['error' => 'Error: El código de categoría "' . htmlspecialchars($codigo) . '" ya existe.']);
+    } else {
+         echo json_encode(['error' => 'Error al guardar en la base de datos: ' . $e->getMessage()]);
+    }
 }
 ?>

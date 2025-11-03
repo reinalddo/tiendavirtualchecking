@@ -14,9 +14,12 @@ $httpClient = new \GuzzleHttp\Client([
 $client = new Google\Client();
 $client->setHttpClient($httpClient);
 
-$client->setClientId(GOOGLE_CLIENT_ID);
-$client->setClientSecret(GOOGLE_CLIENT_SECRET);
-$client->setRedirectUri(GOOGLE_REDIRECT_URL);
+$client->setClientId($config['google_client_id']);
+$client->setClientSecret($config['google_client_secret']);
+
+$redirect_uri = ABSOLUTE_URL . 'google-callback';
+$client->setRedirectUri($redirect_uri);
+
 $client->addScope('email');
 $client->addScope('profile');
 

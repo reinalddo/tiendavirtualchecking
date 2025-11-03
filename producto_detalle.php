@@ -155,6 +155,39 @@ foreach ($configuraciones_raw as $setting) {
     $config[$setting['nombre_setting']] = $setting['valor_setting'];
 }
 
+// ===== INICIO: Lógica Productos Relacionados =====
+$productos_relacionados = [];
+if ($producto) { // Asegurarnos que el producto principal se encontró
+    // 1. Obtener UNA categoría del producto actual (la primera que encuentre)
+    $stmt_cat = $pdo->prepare("SELECT categoria_id FROM producto_categorias WHERE producto_id = ? LIMIT 1");
+    $stmt_cat->execute([$producto['id']]);
+    $categoria_id = $stmt_cat->fetchColumn();
+
+    if ($categoria_id) {
+        // 2. Buscar otros productos ACTIVOS en la misma categoría (excluyendo el actual)
+        //    Limitamos a 5 para no sobrecargar, puedes ajustar este número
+        $stmt_relacionados = $pdo->prepare("
+            SELECT p.*,
+                   (SELECT gal.url FROM producto_galeria gal WHERE gal.producto_id = p.id AND gal.tipo = 'imagen' ORDER BY gal.orden ASC, gal.id ASC LIMIT 1) as imagen_principal
+            FROM productos p
+            JOIN producto_categorias pc ON p.id = pc.producto_id
+            WHERE pc.categoria_id = :categoria_id 
+              AND p.id != :producto_id_actual
+              AND p.es_activo = 1
+            GROUP BY p.id  /* Evita duplicados si un producto está en varias categorías */
+            ORDER BY RAND() /* Orden aleatorio para variar las sugerencias */
+            LIMIT 5 
+        ");
+        $stmt_relacionados->execute([
+            ':categoria_id' => $categoria_id,
+            ':producto_id_actual' => $producto['id']
+        ]);
+        $productos_relacionados = $stmt_relacionados->fetchAll(PDO::FETCH_ASSOC);
+    }
+}
+// ===== FIN: Lógica Productos Relacionados =====
+
+
 // 4. Lógica para ver si el usuario puede opinar
 $puede_opinar = false;
 $ha_comprado = false;
@@ -210,17 +243,21 @@ echo "</pre>";
                             <div class="main-image-placeholder"></div>
                         <?php endif; ?>
                     </div>
-            <div class="detail-gallery-thumbnails">
-                <?php foreach ($galeria_items as $index => $item): ?>
-                    <div class="detail-thumbnail" data-index="<?php echo $index; ?>" data-tipo="<?php echo $item['tipo']; ?>" data-url="<?php echo htmlspecialchars($item['url']); ?>">
-                        <?php if ($item['tipo'] == 'imagen'): ?>
-                            <img src="<?php echo 'uploads/' . htmlspecialchars($item['url']); ?>" alt="Miniatura">
-                        <?php elseif ($item['tipo'] == 'youtube'): ?>
-                            <img src="https://img.youtube.com/vi/<?php echo htmlspecialchars($item['url']); ?>/0.jpg" alt="Miniatura de Video">
-                        <?php endif; ?>
+                    <div class="detail-gallery-thumbnails">
+                        <?php foreach ($galeria_items as $index => $item): ?>
+                            <div class="detail-thumbnail" data-index="<?php echo $index; ?>" data-tipo="<?php echo $item['tipo']; ?>" data-url="<?php echo htmlspecialchars($item['url']); ?>">
+                                <?php if ($item['tipo'] == 'imagen'): ?>
+                                    <img src="<?php echo BASE_URL . 'uploads/' . htmlspecialchars($item['url']); ?>" alt="Miniatura">
+                                <?php elseif ($item['tipo'] == 'youtube'): ?>
+                                    <img src="https://img.youtube.com/vi/<?php echo htmlspecialchars($item['url']); ?>/0.jpg" alt="Miniatura de Video">
+                                <?php elseif ($item['tipo'] == 'video_archivo'): ?>
+                                    <div class="d-flex align-items-center justify-content-center" style="width:100%; height:100%; background-color:#6c757d;">
+                                        <i class="bi bi-film fs-2 text-white"></i>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
-            </div>
             </div>
         </div>
 
@@ -231,17 +268,24 @@ echo "</pre>";
                 <p class="price">
                         <?php echo format_price($producto['precio_usd'], $producto['precio_descuento']); ?>
                 </p>
-                <p><strong>Stock disponible:</strong> <?php echo htmlspecialchars($producto['stock']); ?></p>
-                <form action="carrito_acciones" method="POST">
-                    <input type="hidden" name="producto_id" value="<?php echo $producto['id']; ?>">
-                    
-                    <input type="hidden" name="return_url" value="<?php echo $_SERVER['REQUEST_URI']; ?>">
+                <?php if ($producto['tipo_producto'] == 'fisico'): // Solo muestra stock si es físico ?>
+                    <p><strong>Stock disponible:</strong> <?php echo htmlspecialchars($producto['stock'] ?? 0); // Usa 0 si es NULL por si acaso ?></p>
+                <?php else: ?>
+                    <p><span class="badge bg-info text-dark">Producto Digital</span></p> <?php endif; ?>                
+                    <form action="carrito_acciones" method="POST">
+                        <input type="hidden" name="producto_id" value="<?php echo $producto['id']; ?>">
+                        <input type="hidden" name="return_url" value="<?php echo $_SERVER['REQUEST_URI']; ?>">
 
-                    <label for="cantidad">Cantidad:</label>
-                    <input type="number" id="cantidad" name="cantidad" value="1" min="1" max="<?php echo $producto['stock']; ?>">
-                    <button type="submit" name="agregar_al_carrito" class="button">Añadir al Carrito</button>
-                </form>
-                <div class="wishlist-container">
+                        <?php if ($producto['tipo_producto'] == 'fisico'): ?>
+                            <label for="cantidad">Cantidad:</label>
+                            <input type="number" id="cantidad" name="cantidad" value="1" min="1" max="<?php echo htmlspecialchars($producto['stock'] ?? 0); ?>">
+                        <?php else: // Si es Producto Digital ?>
+                            <input type="hidden" name="cantidad" value="1">
+                            <p><small>Cantidad: 1 (Producto digital)</small></p>
+                        <?php endif; ?>
+                        <button type="submit" name="agregar_al_carrito" class="btn btn-primary">Añadir al Carrito</button>
+                    </form>                
+                    <div class="wishlist-container">
                     <?php if (isset($_SESSION['usuario_id'])): ?>
                         <button class="wishlist-btn <?php echo $esta_en_wishlist ? 'active' : ''; ?>" data-producto-id="<?php echo $producto_id; ?>">
                             ❤ Guardar en mi Lista
@@ -422,6 +466,20 @@ echo "</pre>";
             </div>
         </div>
 
+
+<?php if (!empty($productos_relacionados)): ?>
+<div class="container-fluid py-5 bg-light"> <div class="row">
+         <div class="col-lg-10 offset-lg-1"> <h2 class="mb-4 text-center">También te podría interesar</h2>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-5 g-4">
+                <?php foreach ($productos_relacionados as $producto): // Reutilizamos la variable $producto localmente ?>
+                    <?php include 'includes/product_card.php'; // Incluimos la tarjeta reutilizable ?>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+        
 <script src="js/gallery-detail.js"></script>
 
 <?php require_once 'includes/footer.php'; ?>

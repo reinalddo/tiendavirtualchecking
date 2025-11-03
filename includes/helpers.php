@@ -241,4 +241,82 @@ function verificar_sesion_admin() {
     }
 }
 
-?>
+/**
+ * Genera los registros de descarga para los productos digitales de un pedido pagado.
+ * Evita duplicados si ya existen registros para un detalle de pedido.
+ *
+ * @param PDO $pdo La conexión a la base de datos.
+ * @param int $pedido_id El ID del pedido que ha sido pagado.
+ * @return bool Devuelve true si se intentó generar descargas, false si hubo un error al obtener datos.
+ */
+function generar_accesos_descarga($pdo, $pedido_id, $config) {
+    try {
+        // 1. Obtener los detalles de pedido que son productos digitales y el ID del usuario
+        $stmt_items = $pdo->prepare("
+            SELECT pd.id as pedido_detalle_id, pd.producto_id, p.usuario_id
+            FROM pedido_detalles pd
+            JOIN productos prod ON pd.producto_id = prod.id
+            JOIN pedidos p ON pd.pedido_id = p.id
+            WHERE pd.pedido_id = ? AND prod.tipo_producto = 'digital'
+        ");
+        $stmt_items->execute([$pedido_id]);
+        $items_digitales = $stmt_items->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($items_digitales)) {
+            return true; // No hay productos digitales, no hay nada que generar.
+        }
+
+        // 2. Preparar la inserción en la tabla de descargas
+        $sql_descarga = "INSERT IGNORE INTO pedidos_descargas 
+                            (pedido_detalle_id, usuario_id, producto_id, token_descarga, descargas_restantes) 
+                         VALUES (?, ?, ?, ?, ?)";
+                         //ON DUPLICATE KEY UPDATE token_descarga = token_descarga; // Evita error si ya existe
+        $stmt_descarga = $pdo->prepare($sql_descarga);
+        //$limite_descargas = 5; // Puedes hacerlo configurable si quieres
+
+        // ===== INICIO: Leer límite desde config =====
+        $limite_configurado = isset($config['digital_download_limit']) ? (int)$config['digital_download_limit'] : 5; // Default 5 si no está configurado
+        $limite_descargas = ($limite_configurado <= 0) ? null : $limite_configurado; // Si es 0 o menos, guardar NULL (ilimitado)
+        // ===== FIN: Leer límite desde config =====
+
+        // ===== INICIO: Depuración del Límite =====
+        $valor_config_raw = $config['digital_download_limit'] ?? 'NO_ENCONTRADO'; // Lee el valor crudo
+        error_log("Pedido ID {$pedido_id}: Leyendo 'digital_download_limit'. Valor raw: '{$valor_config_raw}'"); // Log 1: Qué se leyó
+
+        $limite_configurado = isset($config['digital_download_limit']) ? (int)$config['digital_download_limit'] : 5;
+        error_log("Pedido ID {$pedido_id}: Límite configurado (int): {$limite_configurado}"); // Log 2: Valor convertido a entero
+
+        $limite_descargas = ($limite_configurado <= 0) ? null : $limite_configurado;
+        $log_limite_final = is_null($limite_descargas) ? 'NULL (Ilimitado)' : $limite_descargas;
+        error_log("Pedido ID {$pedido_id}: Límite final a guardar: {$log_limite_final}"); // Log 3: Valor final que se usará
+        // ===== FIN: Depuración del Límite =====
+
+        // 3. Iterar y generar token e insertar por cada item digital
+        foreach ($items_digitales as $item) {
+            // Verificar si ya existe una descarga para este pedido_detalle_id
+            $stmt_check = $pdo->prepare("SELECT id FROM pedidos_descargas WHERE pedido_detalle_id = ?");
+            $stmt_check->execute([$item['pedido_detalle_id']]);
+            if ($stmt_check->fetch()) {
+                continue; // Si ya existe, saltar al siguiente item
+            }
+
+            // Generar token seguro único
+            $token = bin2hex(random_bytes(32));
+
+            $stmt_descarga->execute([
+                $item['pedido_detalle_id'],
+                $item['usuario_id'],
+                $item['producto_id'],
+                $token,
+                $limite_descargas
+            ]);
+        }
+        return true;
+
+    } catch (PDOException $e) {
+        error_log("Error al generar accesos de descarga para pedido ID {$pedido_id}: " . $e->getMessage());
+        return false;
+    }
+}
+
+?> 

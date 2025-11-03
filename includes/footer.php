@@ -42,7 +42,7 @@
     </div>
 </div>
 
-<footer class="bg-dark text-white pt-5 pb-4">
+<footer class="pt-5 pb-4">
     <div class="container text-center text-md-start">
         <div class="row">
             <div class="col-md-4 mx-auto mb-4">
@@ -64,9 +64,9 @@
             <div class="col-md-2 mx-auto mb-4">
                 <h6 class="text-uppercase fw-bold footer-dw">Enlaces</h6>
                 <hr class="mb-4 mt-0 d-inline-block mx-auto" style="width: 60px; background-color: #7c4dff; height: 2px"/>
-                <p><a href="/" class="text-white">Inicio</a></p>
-                <p><a href="productos" class="text-white">Productos</a></p>
-                <p><a href="contacto" class="text-white">Contacto</a></p>
+                <p><a href="/" class="">Inicio</a></p>
+                <p><a href="productos" class="">Productos</a></p>
+                <p><a href="contacto" class="">Contacto</a></p>
             </div>
 
             <div class="col-md-4 mx-auto mb-4">
@@ -99,12 +99,12 @@
     </div>
 
     <div class="text-center p-3" style="background-color: rgba(0, 0, 0, 0.2)">
-            © <?php echo date('Y'); ?> <?php echo htmlspecialchars($config['tienda_razon_social'] ?? 'Mi Tienda Web'); ?>. Todos los derechos reservados.
+            © <?php echo date('Y'); ?> <?php echo htmlspecialchars($config['tienda_razon_social'] ?? 'Mi Tienda Web'); ?> Todos los derechos reservados.
     </div>
 
     <?php
     // Mostramos el botón solo si es cliente, si está activo y si se ha introducido un número
-    if (!empty($config['whatsapp_activo']) && !empty($config['whatsapp_numero']) && $_SESSION['usuario_rol'] != 'admin'):
+    if (!empty($config['whatsapp_activo']) && !empty($config['whatsapp_numero']) && (!isset($_SESSION['usuario_rol']) || $_SESSION['usuario_rol'] != 'admin')):
         // Limpiamos el número para asegurar que solo contenga dígitos
         $numero_whatsapp_limpio = preg_replace('/\D/', '', $config['whatsapp_numero']);
         // Preparamos el mensaje para la URL, codificando los caracteres especiales

@@ -10,6 +10,7 @@ $stmt = $pdo->query("SELECT pr.*, p.nombre as nombre_producto, u.nombre_pila as 
                      JOIN usuarios u ON pr.usuario_id = u.id
                      ORDER BY pr.respuesta IS NULL DESC, pr.fecha_pregunta DESC");
 $preguntas = $stmt->fetchAll(PDO::FETCH_ASSOC);
+require_once '../includes/header.php';
 ?>
 
 <main>

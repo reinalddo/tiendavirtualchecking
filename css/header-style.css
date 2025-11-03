@@ -23,6 +23,39 @@
     border: none;
     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
     margin-top: 0; 
+    padding: 1rem; /* Añadido padding general */
+    width: 550px; /* Ancho base para escritorio, ligeramente aumentado */
+    max-width: 95vw; /* Previene desbordamiento en ventanas muy estrechas */
+}
+
+/* Contenedor interno para las columnas (para controlar padding) */
+.dropdown-menu-categorias .row {
+    margin: 0 !important; /* Anula márgenes negativos de Bootstrap si los hubiera */
+}
+
+/* Ajuste para pantallas pequeñas (Tablets y Móviles) */
+@media (max-width: 991.98px) { /* Usamos el punto de quiebre de Bootstrap para menú colapsado (lg) */
+    .navbar-collapse .dropdown-menu-categorias { /* Selector más específico */
+        width: 100%; /* Ocupa todo el ancho del contenedor del menú colapsado */
+        padding-left: 0;  /* Elimina padding izquierdo */
+        padding-right: 0; /* Elimina padding derecho */
+        padding-top: 0.5rem; /* Mantiene un poco de padding vertical */
+        padding-bottom: 0.5rem;
+        box-shadow: none; /* Opcional: Quita la sombra en móvil */
+        border: none; /* Opcional: Quita el borde en móvil */
+    }
+    
+    /* Mantenemos el apilado vertical y ajuste de padding de items */
+    .navbar-collapse .dropdown-menu-categorias .col-md-4 {
+        width: 100% !important; 
+        padding-left: 0; /* Asegura no tener padding extra en la columna */
+        padding-right: 0;
+    }
+    
+    .navbar-collapse .dropdown-menu-categorias .dropdown-item {
+        padding: 0.5rem 1rem; /* Ajusta padding de los enlaces internos */
+        text-align: center; /* Centra el texto de las categorías */
+    }
 }
 
 /* Estilo para el ícono y contador del carrito */
@@ -81,11 +114,52 @@
 }
 
 /* Estilos para el dropdown de notificaciones */
-#notification-list {
-    max-height: 450px; /* Altura máxima antes de que aparezca el scroll */
-    overflow-y: auto;  /* Muestra el scroll vertical solo si es necesario */
+/* Estilos base para ESCRITORIO */
+#notificationsDropdown + .dropdown-menu { 
+    width: 380px; /* Ancho ajustado para escritorio */
+    max-width: 95vw; /* Previene desbordamiento en ventanas estrechas */
+    padding: 0; /* Quitamos padding del contenedor principal */
 }
 
+#notification-list {
+    max-height: 450px;
+    overflow-y: auto;
+}
+
+/* Estilos específicos para los items (aplican en ambas vistas) */
+#notification-list .dropdown-item-wrapper {
+    padding: 0.75rem 1rem; /* Padding interno para cada notificación */
+    border-bottom: 1px solid #eee; /* Separador */
+}
+#notification-list .dropdown-item-wrapper:last-child {
+    border-bottom: none; /* Sin borde en el último item */
+}
+#notification-list .notification-link {
+    display: block; /* Asegura que el enlace ocupe espacio */
+    margin-bottom: 0.5rem; /* Espacio antes de los botones */
+}
+#notification-list .dropdown-item-wrapper .text-end {
+    text-align: right !important; /* Asegura alineación derecha */
+}
+ #notification-list .dropdown-item-wrapper .btn {
+    margin-left: 0.25rem; /* Espacio entre botones */
+}
+
+
+/* Ajuste específico para MÓVIL (cuando el menú está colapsado) */
+@media (max-width: 991.98px) { 
+     .navbar-collapse #notificationsDropdown + .dropdown-menu { /* Selector específico */
+        width: 100%; /* Ocupa todo el ancho del contenedor del menú colapsado */
+        box-shadow: none; 
+        border: none; 
+        max-width: 100%; /* Anula el max-width anterior */
+    }
+    
+    /* Ajustar padding de los items en móvil */
+     .navbar-collapse #notification-list .dropdown-item-wrapper {
+        padding: 0.5rem 0.75rem; 
+    }
+}
 .navbar .d-flex.mx-auto {
     margin-bottom: 0 !important;
 }

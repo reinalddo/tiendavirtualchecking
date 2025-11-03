@@ -103,7 +103,11 @@ require_once 'includes/header.php';
                                 <button type="submit" class="btn btn-primary">Iniciar Sesión</button>
                             </div>
                         </form>
-                        
+
+                        <div class="text-center mt-2">
+                             <a href="solicitar-restablecimiento">¿Olvidaste tu contraseña?</a>
+                        </div>
+
                         <hr class="my-4">
 
                         <a href="google-login" id="googleLoginBtn" class="btn btn-danger w-100 mb-3">

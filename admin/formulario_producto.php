@@ -31,6 +31,7 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
 
 
 $categorias_todas = $pdo->query("SELECT * FROM categorias ORDER BY nombre")->fetchAll(PDO::FETCH_ASSOC);
+require_once '../includes/header.php';
 ?>
 
 <main>
@@ -62,7 +63,29 @@ $categorias_todas = $pdo->query("SELECT * FROM categorias ORDER BY nombre")->fet
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <div class="mb-3">
+
+                                <div class="mb-3">
+                                    <label class="form-label">Tipo de Producto:</label>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="tipo_producto" id="tipo_fisico" value="fisico" <?php echo ($producto['tipo_producto'] ?? 'fisico') == 'fisico' ? 'checked' : ''; ?>>
+                                        <label class="form-check-label" for="tipo_fisico">Físico</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="tipo_producto" id="tipo_digital" value="digital" <?php echo ($producto['tipo_producto'] ?? '') == 'digital' ? 'checked' : ''; ?>>
+                                        <label class="form-check-label" for="tipo_digital">Digital</label>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3" id="campo-archivo-digital" style="<?php echo ($producto['tipo_producto'] ?? 'fisico') == 'digital' ? '' : 'display: none;'; ?>">
+                                    <label for="archivo_digital" class="form-label">Archivo Digital:</label>
+                                    <input type="file" id="archivo_digital" name="archivo_digital" class="form-control">
+                                    <?php if (!empty($producto['archivo_digital_nombre'])): ?>
+                                        <small class="form-text text-muted">Archivo actual: <?php echo htmlspecialchars($producto['archivo_digital_nombre']); ?>. Sube uno nuevo para reemplazarlo.</small>
+                                    <?php endif; ?>
+                                    <small class="form-text text-muted">Ej: PDF, ZIP, JPG, MP4. Límite: 50MB</small>
+                                </div>
+
+                                <div class="mb-3">
                                         <label for="precio_usd" class="form-label">Precio Base (en USD):</label>
                                         <input type="number" id="precio_usd" name="precio_usd" class="form-control" step="0.01" value="<?php echo htmlspecialchars($producto['precio_usd'] ?? ''); ?>" required>
                                     </div>
@@ -70,9 +93,9 @@ $categorias_todas = $pdo->query("SELECT * FROM categorias ORDER BY nombre")->fet
                                         <label for="precio_descuento" class="form-label">Precio de Descuento (opcional):</label>
                                         <input type="number" id="precio_descuento" name="precio_descuento" class="form-control" step="0.01" value="<?php echo htmlspecialchars($producto['precio_descuento'] ?? ''); ?>">
                                     </div>
-                                    <div class="mb-3">
+                                     <div class="mb-3" id="campo-stock" style="<?php echo ($producto['tipo_producto'] ?? 'fisico') == 'fisico' ? '' : 'display: none;'; ?>">
                                         <label for="stock" class="form-label">Stock:</label>
-                                        <input type="number" id="stock" name="stock" class="form-control" value="<?php echo htmlspecialchars($producto['stock'] ?? 0); ?>" required min="0">
+                                        <input type="number" id="stock" name="stock" class="form-control" value="<?php echo htmlspecialchars($producto['stock'] ?? 0); ?>" min="0">
                                     </div>
                                     <div class="card mb-3">
                                         <div class="card-body">
@@ -80,10 +103,12 @@ $categorias_todas = $pdo->query("SELECT * FROM categorias ORDER BY nombre")->fet
                                                 <input class="form-check-input" type="checkbox" name="es_activo" value="1" id="es_activo" <?php echo !empty($producto['es_activo']) ? 'checked' : ''; ?>>
                                                 <label class="form-check-label" for="es_activo">Producto Activo</label>
                                             </div>
+                                            <?php /* ?>
                                             <div class="form-check">
                                                 <input class="form-check-input" type="checkbox" name="es_fisico" value="1" checked id="es_fisico" <?php echo !empty($producto['es_fisico']) ? 'checked' : ''; ?>>
                                                 <label class="form-check-label" for="es_fisico">Es Producto Físico (requiere envío)</label>
                                             </div>
+                                            <?php */ ?>
                                         </div>
                                     </div>
                                 </div>
@@ -121,12 +146,15 @@ $categorias_todas = $pdo->query("SELECT * FROM categorias ORDER BY nombre")->fet
                                                 <div>
                                                     <?php if ($item['tipo'] == 'imagen'): ?>
                                                         <img src="<?php echo BASE_URL . 'uploads/' . htmlspecialchars($item['url']); ?>" alt="Imagen del producto" height="40" class="me-2">
-                                                    <?php else: ?>
-                                                        <i class="bi bi-youtube text-danger me-2"></i> 
+                                                    <?php elseif ($item['tipo'] == 'youtube'): ?>
+                                                        <i class="bi bi-youtube text-danger me-2 fs-4"></i> 
+                                                        <span>Video: <?php echo htmlspecialchars($item['url']); ?></span>
+                                                    <?php elseif ($item['tipo'] == 'video_archivo'): ?>
+                                                        <i class="bi bi-film text-info me-2 fs-4"></i> 
                                                         <span>Video: <?php echo htmlspecialchars($item['url']); ?></span>
                                                     <?php endif; ?>
                                                 </div>
-                                                <a href="eliminar_imagen_galeria.php?id=<?php echo $item['id']; ?>&producto_id=<?php echo $producto['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro?');">
+                                                <a href="panel/galeria/item/eliminar/<?php echo $item['id']; ?>/producto/<?php echo $producto['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('¿Seguro?');">
                                                     <i class="bi bi-trash"></i>
                                                 </a>
                                             </div>
@@ -135,7 +163,7 @@ $categorias_todas = $pdo->query("SELECT * FROM categorias ORDER BY nombre")->fet
                                     
                                     <div class="mb-3">
                                         <label for="imagenes" class="form-label">Añadir Nuevas Imágenes:</label>
-                                        <input type="file" id="imagenes" name="imagenes[]" class="form-control" multiple>
+                                        <input type="file" id="imagenes" name="imagenes[]" class="form-control" multiple accept="image/*">
                                     </div>
                                     <button type="button" class="btn btn-secondary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#mediaLibraryModal">
                                         Elegir de la Biblioteca
@@ -143,6 +171,11 @@ $categorias_todas = $pdo->query("SELECT * FROM categorias ORDER BY nombre")->fet
                                     <div class="mb-3">
                                         <label for="video_youtube" class="form-label">Añadir URL de Video (YouTube):</label>
                                         <input type="text" id="video_youtube" name="video_youtube" class="form-control" placeholder="Ej: https://www.youtube.com/watch?v=...">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="video_archivo" class="form-label">O subir un archivo de video (MP4):</label>
+                                        <input type="file" id="video_archivo" name="video_archivo" class="form-control" accept="video/mp4">
+                                        <small class="form-text text-muted">Límite recomendado: 20MB.</small>
                                     </div>
                                 </div>
 
@@ -173,6 +206,44 @@ $categorias_todas = $pdo->query("SELECT * FROM categorias ORDER BY nombre")->fet
         plugins: 'lists link image media table code help wordcount',
         toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | code | help'
     });
+
+    // Lógica para mostrar/ocultar campos según el tipo de producto
+    document.addEventListener('DOMContentLoaded', function() {
+        const tipoFisico = document.getElementById('tipo_fisico');
+        const tipoDigital = document.getElementById('tipo_digital');
+        const campoStock = document.getElementById('campo-stock');
+        const campoArchivo = document.getElementById('campo-archivo-digital');
+        const inputStock = document.getElementById('stock'); // Input de stock
+        const inputArchivo = document.getElementById('archivo_digital'); // Input de archivo
+
+        function toggleProductFields() {
+            if (tipoDigital.checked) {
+                campoStock.style.display = 'none';
+                campoArchivo.style.display = 'block';
+                inputStock.required = false; // Stock no es requerido para digital
+                // Archivo es requerido solo si es un producto nuevo digital
+                // O si se está editando y no hay archivo previo
+                <?php if (empty($producto['id']) || empty($producto['archivo_digital_ruta'])): ?>
+                   // inputArchivo.required = true; // Descomenta si quieres que siempre sea obligatorio subir algo
+                <?php else: ?>
+                   // inputArchivo.required = false; // No es req si ya existe uno
+                <?php endif; ?>
+
+            } else { // Físico seleccionado
+                campoStock.style.display = 'block';
+                campoArchivo.style.display = 'none';
+                inputStock.required = true; // Stock es requerido para físico
+                inputArchivo.required = false; // Archivo no es requerido
+            }
+        }
+
+        tipoFisico.addEventListener('change', toggleProductFields);
+        tipoDigital.addEventListener('change', toggleProductFields);
+
+        // Ejecutar al cargar por si se está editando
+        toggleProductFields();
+    });
+
 </script>
 
 <?php require_once '../includes/footer.php'; ?>
